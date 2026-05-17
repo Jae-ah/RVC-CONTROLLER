@@ -1,0 +1,5 @@
+build/
+build-cov/
+*.o
+*.a
+*.d
