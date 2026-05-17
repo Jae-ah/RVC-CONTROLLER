@@ -23,10 +23,8 @@ void NavigationController::turn(const std::vector<Direction>& available) {
         return;
     }
 
-    Direction direction;
-    if (available.size() == 1) {
-        direction = available[0];
-    } else {
+    Direction direction = available[0];
+    if (available.size() != 1) {
         static std::mt19937 rng(std::random_device{}());
         std::uniform_int_distribution<std::size_t> dist(0, available.size() - 1);
         direction = available[dist(rng)];
