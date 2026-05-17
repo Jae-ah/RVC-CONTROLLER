@@ -67,9 +67,6 @@ static constexpr int LOG_SIZE  = 6;     // 이벤트 로그 표시 줄 수
 #define BGBLUE   "\033[44m"
 
 static void clearScreen()  { std::cout << "\033[2J\033[H"; }
-static void moveCursor(int row, int col) {
-    std::cout << "\033[" << row << ";" << col << "H";
-}
 static void hideCursor() { std::cout << "\033[?25l"; }
 static void showCursor() { std::cout << "\033[?25h"; }
 
@@ -165,8 +162,6 @@ struct MsgLog {
 // ─────────────────────────────────────────────────────────
 // GridDriveMotor: IDriveMotor 구현 — 그리드 위 RVC 이동
 // ─────────────────────────────────────────────────────────
-enum class Motion { IDLE, FWD, BWD, STOPPED };
-
 class GridDriveMotor : public IDriveMotor {
 public:
     GridDriveMotor(SimRVC& rvc, const std::vector<std::vector<Cell>>& grid, MsgLog& log)
@@ -174,7 +169,6 @@ public:
 
     void moveForward() override {
         auto [nr, nc] = rvc_.ahead();
-        motion_ = Motion::FWD;
         if (inBounds(nr, nc) && grid_[nr][nc] != Cell::WALL) {
             rvc_.row = nr; rvc_.col = nc;
         }
@@ -182,39 +176,30 @@ public:
     }
     void moveBackward() override {
         auto [nr, nc] = rvc_.behind();
-        motion_ = Motion::BWD;
         if (inBounds(nr, nc) && grid_[nr][nc] != Cell::WALL) {
             rvc_.row = nr; rvc_.col = nc;
         }
         log_.push(YELLOW "  [Drive] moveBackward()" RESET);
     }
     void stop() override {
-        motion_ = Motion::STOPPED;
         log_.push(GRAY "  [Drive] stop()" RESET);
     }
     void turn(Direction dir) override {
         if (dir == Direction::LEFT) {
             rvc_.heading = turnLeft(rvc_.heading);
-            lastTurn_ = Direction::LEFT;
             log_.push(CYAN "  [Drive] turn(LEFT)" RESET);
         } else {
             rvc_.heading = turnRight(rvc_.heading);
-            lastTurn_ = Direction::RIGHT;
             log_.push(CYAN "  [Drive] turn(RIGHT)" RESET);
         }
     }
-
-    Motion    motion()   const { return motion_; }
-    Direction lastTurn() const { return lastTurn_; }
 
 private:
     SimRVC& rvc_;
     const std::vector<std::vector<Cell>>& grid_;
     MsgLog& log_;
-    Motion    motion_   = Motion::IDLE;
-    Direction lastTurn_ = Direction::RIGHT;
 
-    bool inBounds(int r, int c) const {
+    static bool inBounds(int r, int c) {
         return r >= 0 && r < ROWS && c >= 0 && c < COLS;
     }
 };
@@ -228,25 +213,21 @@ public:
 
     void startCleaning(CleaningLevel level) override {
         level_ = level;
-        running_ = true;
         if (level == CleaningLevel::HIGH)
             log_.push(MAGENTA "  [Clean] startCleaning(HIGH)" RESET);
         else
             log_.push(GREEN "  [Clean] startCleaning(NORMAL)" RESET);
     }
     void stopCleaning() override {
-        running_ = false;
-        level_   = CleaningLevel::NORMAL;
+        level_ = CleaningLevel::NORMAL;
         log_.push(GRAY "  [Clean] stopCleaning()" RESET);
     }
 
-    bool         running() const { return running_; }
-    CleaningLevel level()  const { return level_; }
+    CleaningLevel level() const { return level_; }
 
 private:
     MsgLog& log_;
-    bool          running_ = false;
-    CleaningLevel level_   = CleaningLevel::NORMAL;
+    CleaningLevel level_ = CleaningLevel::NORMAL;
 };
 
 // ─────────────────────────────────────────────────────────
@@ -315,7 +296,7 @@ struct Simulation {
     }
 
 private:
-    bool inBounds(int r, int c) const {
+    static bool inBounds(int r, int c) {
         return r >= 0 && r < ROWS && c >= 0 && c < COLS;
     }
     bool isBlocked(std::pair<int,int> pos) const {
@@ -333,8 +314,8 @@ private:
         }
     }
     void checkDone() {
-        for (auto& row : grid)
-            for (auto& c : row)
+        for (const auto& row : grid)
+            for (const auto& c : row)
                 if (c == Cell::DUST || c == Cell::EMPTY) return;
         done = true;
         log.push(GREEN BOLD "  청소 완료!" RESET);
@@ -793,7 +774,7 @@ private:
     }
 
     // ─── 시뮬 상태 패널 ───────────────────────────────────
-    void printSimStatus(const Simulation& sim, const char* state, const char* level) {
+    static void printSimStatus(const Simulation& sim, const char* state, const char* level) {
         std::cout << "\n";
         std::cout << "  " BOLD "┌─ 상태 ──────────────────────────────────────────┐" RESET "\n";
         std::cout << "  │  상태: " BOLD << state << RESET
@@ -815,7 +796,7 @@ private:
     }
 
     // ─── 시뮬 도움말 ──────────────────────────────────────
-    void printSimHelp() {
+    static void printSimHelp() {
         std::cout << "  " CYAN "P" RESET " 일시정지/재개  "
                   << CYAN "E" RESET " 편집모드  "
                   << CYAN "Q" RESET " 종료\n";
@@ -824,7 +805,7 @@ private:
     // ─── 이벤트 로그 ──────────────────────────────────────
     void printLog() {
         std::cout << "\n  " GRAY "── 이벤트 로그 ──" RESET "\n";
-        for (auto& line : log_.lines) {
+        for (const auto& line : log_.lines) {
             std::cout << line << "\n";
         }
     }

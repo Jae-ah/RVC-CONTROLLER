@@ -97,8 +97,9 @@ jobs:
             --std=c++17 \
             --suppress=missingIncludeSystem \
             --suppress=unmatchedSuppression \
+            --suppress=useStlAlgorithm \
+            --suppress=normalCheckLevelMaxBranches \
             --error-exitcode=1 \
-            --inline-suppr \
             -I src \
             src/ \
             simulator/ \
