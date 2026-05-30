@@ -77,7 +77,7 @@ private:
         // 실패 목록
         if (failed > 0) {
             std::cout << "\n  \033[31m실패 목록:\033[0m\n";
-            for (const auto& r : results_)
+            for (auto& r : results_)
                 if (!r.ok)
                     std::cout << "    • " << r.id << " " << r.name
                               << "\n      → " << r.msg << "\n";

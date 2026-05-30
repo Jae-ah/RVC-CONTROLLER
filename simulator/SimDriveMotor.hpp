@@ -7,7 +7,7 @@
 class SimDriveMotor : public IDriveMotor {
 public:
     struct Call {
-        enum Type { FORWARD, BACKWARD, STOP, TURN } type;
+        enum Type { FORWARD, BACKWARD, STOP, TURN, ROTATE_RIGHT, ROTATE_LEFT } type;
         Direction dir{Direction::LEFT};
     };
 
@@ -40,17 +40,33 @@ public:
             log("DriveMotor", s + "          ", "\033[36m");
         }
     }
+    void rotateRight() override {
+        calls.push_back({Call::ROTATE_RIGHT});
+        ++rotateRightCount;
+        if (shared_) shared_->push_back("drive:rotateRight");
+        if (verbose_) log("DriveMotor", "rotateRight()     ", "\033[36m");
+    }
+    void rotateLeft() override {
+        calls.push_back({Call::ROTATE_LEFT});
+        ++rotateLeftCount;
+        if (shared_) shared_->push_back("drive:rotateLeft");
+        if (verbose_) log("DriveMotor", "rotateLeft()      ", "\033[36m");
+    }
 
     void setSharedLog(std::vector<std::string>* log) { shared_ = log; }
 
     void reset() {
         calls.clear(); turnCalls.clear();
-        forwardCount = backwardCount = stopCount = 0;
+        forwardCount = backwardCount = stopCount = rotateRightCount = rotateLeftCount = 0;
     }
 
     std::vector<Call>      calls;
     std::vector<Direction> turnCalls;
-    int forwardCount = 0, backwardCount = 0, stopCount = 0;
+    int forwardCount     = 0;
+    int backwardCount    = 0;
+    int stopCount        = 0;
+    int rotateRightCount = 0;
+    int rotateLeftCount  = 0;
 
 private:
     bool verbose_;

@@ -1,6 +1,5 @@
 #pragma once
 #include "Direction.hpp"
-#include <vector>
 
 class IDriveMotor;
 
@@ -11,7 +10,9 @@ public:
     void moveForward();
     void moveBackward();
     void stop();
-    void turn(const std::vector<Direction>& available);
+    void turn(Direction direction);
+    void rotateRight();
+    void rotateLeft();
 
 private:
     IDriveMotor& motor_;

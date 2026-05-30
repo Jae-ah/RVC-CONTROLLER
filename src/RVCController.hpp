@@ -1,6 +1,5 @@
 #pragma once
 #include "Direction.hpp"
-#include <vector>
 
 class NavigationController;
 class CleaningController;
@@ -11,14 +10,21 @@ public:
 
     void start();
     void frontObstacleDetected();
-    void sideStatus(const std::vector<Direction>& available);
-    void allSidesBlocked();
+    void sideStatus(Direction direction, bool clear);
     void dustDetected();
 
 private:
-    enum class State { IDLE, CLEANING, STOPPED, REVERSING };
+    enum class State {
+        IDLE,
+        CLEANING,
+        STOPPED,
+        STOPPED_CHECKING_RIGHT,
+        REVERSING,
+        REVERSING_CHECKING_RIGHT
+    };
 
     NavigationController& nav_;
     CleaningController& cleaning_;
     State state_;
+    bool leftClear_;
 };

@@ -25,7 +25,7 @@ void HighPowerTimer::reset() {
 
 void HighPowerTimer::stop() {
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::scoped_lock lock(mutex_);
         active_ = false;
     }
     cv_.notify_all();

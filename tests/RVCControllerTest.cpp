@@ -5,8 +5,6 @@
 #include "../src/CleaningController.hpp"
 #include "../src/RVCController.hpp"
 
-// RVCController는 NavigationController·CleaningController를 인터페이스 없이
-// 직접 참조하므로, 두 컨트롤러를 Stub 모터와 함께 실제 인스턴스로 주입한다.
 class RVCControllerTest : public ::testing::Test {
 protected:
     StubDriveMotor    driveMotor;
@@ -16,12 +14,28 @@ protected:
     RVCController        rvc{nav, cleaning};
 
     void resetCounters() {
-        driveMotor.forwardCount  = 0;
-        driveMotor.backwardCount = 0;
-        driveMotor.stopCount     = 0;
+        driveMotor.forwardCount     = 0;
+        driveMotor.backwardCount    = 0;
+        driveMotor.stopCount        = 0;
+        driveMotor.rotateRightCount = 0;
+        driveMotor.rotateLeftCount  = 0;
         driveMotor.turnCalls.clear();
         cleaningMotor.startCalls.clear();
         cleaningMotor.stopCount = 0;
+    }
+
+    // 전방 장애물 감지 후 좌우 sideStatus 두 번 호출 (SD-002 흐름)
+    void obstacleAndSideCheck(bool leftClear, bool rightClear) {
+        rvc.frontObstacleDetected();
+        rvc.sideStatus(Direction::LEFT, leftClear);
+        rvc.sideStatus(Direction::RIGHT, rightClear);
+    }
+
+    // 좌우 모두 막힘(E1)으로 REVERSING 진입
+    void enterReversingState() {
+        rvc.start();
+        obstacleAndSideCheck(false, false);
+        resetCounters();
     }
 };
 
@@ -60,38 +74,109 @@ TEST_F(RVCControllerTest, frontObstacleDetected_stopsMotor) {
     EXPECT_EQ(driveMotor.stopCount, 1);
 }
 
-// ── sideStatus() — STOPPED 상태 ──────────────────────────────────────────────
+// ── sideStatus() — STOPPED: 첫 번째 호출(LEFT)은 항상 rotateRight ──────────
 
-TEST_F(RVCControllerTest, sideStatus_whenStopped_turnsToAvailableDirection) {
+TEST_F(RVCControllerTest, sideStatus_firstCall_rotatesRight) {
     rvc.start();
     rvc.frontObstacleDetected();
     resetCounters();
 
-    rvc.sideStatus({Direction::LEFT});
+    rvc.sideStatus(Direction::LEFT, true);
+
+    EXPECT_EQ(driveMotor.rotateRightCount, 1);
+}
+
+TEST_F(RVCControllerTest, sideStatus_secondCall_rotatesLeft) {
+    rvc.start();
+    rvc.frontObstacleDetected();
+    rvc.sideStatus(Direction::LEFT, true);
+    resetCounters();
+
+    rvc.sideStatus(Direction::RIGHT, false);
+
+    EXPECT_EQ(driveMotor.rotateLeftCount, 1);
+}
+
+// ── sideStatus() — STOPPED: 좌측 여유 → LEFT 우선 ──────────────────────────
+
+TEST_F(RVCControllerTest, sideStatus_leftClear_turnsLeft) {
+    rvc.start();
+    resetCounters();
+
+    obstacleAndSideCheck(/*leftClear=*/true, /*rightClear=*/false);
 
     ASSERT_EQ(driveMotor.turnCalls.size(), 1u);
     EXPECT_EQ(driveMotor.turnCalls[0], Direction::LEFT);
 }
 
-TEST_F(RVCControllerTest, sideStatus_whenStopped_restartsCleaning) {
+TEST_F(RVCControllerTest, sideStatus_leftClear_restartsCleaning) {
     rvc.start();
-    rvc.frontObstacleDetected();
     resetCounters();
 
-    rvc.sideStatus({Direction::RIGHT});
+    obstacleAndSideCheck(true, false);
 
     ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
     EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::NORMAL);
 }
 
-TEST_F(RVCControllerTest, sideStatus_whenStopped_movesForward) {
+TEST_F(RVCControllerTest, sideStatus_leftClear_movesForward) {
     rvc.start();
-    rvc.frontObstacleDetected();
     resetCounters();
 
-    rvc.sideStatus({Direction::LEFT});
+    obstacleAndSideCheck(true, false);
 
     EXPECT_EQ(driveMotor.forwardCount, 1);
+}
+
+// ── sideStatus() — STOPPED: 우측만 여유 ──────────────────────────────────────
+
+TEST_F(RVCControllerTest, sideStatus_leftBlockedRightClear_turnsRight) {
+    rvc.start();
+    resetCounters();
+
+    obstacleAndSideCheck(false, true);
+
+    ASSERT_EQ(driveMotor.turnCalls.size(), 1u);
+    EXPECT_EQ(driveMotor.turnCalls[0], Direction::RIGHT);
+}
+
+TEST_F(RVCControllerTest, sideStatus_leftBlockedRightClear_restartsCleaning) {
+    rvc.start();
+    resetCounters();
+
+    obstacleAndSideCheck(false, true);
+
+    ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
+    EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::NORMAL);
+}
+
+TEST_F(RVCControllerTest, sideStatus_leftBlockedRightClear_movesForward) {
+    rvc.start();
+    resetCounters();
+
+    obstacleAndSideCheck(false, true);
+
+    EXPECT_EQ(driveMotor.forwardCount, 1);
+}
+
+// ── sideStatus() — E1: 좌·우 모두 막힘 → REVERSING ─────────────────────────
+
+TEST_F(RVCControllerTest, sideStatus_bothBlocked_movesBackward) {
+    rvc.start();
+    resetCounters();
+
+    obstacleAndSideCheck(false, false);
+
+    EXPECT_EQ(driveMotor.backwardCount, 1);
+}
+
+TEST_F(RVCControllerTest, sideStatus_bothBlocked_doesNotTurn) {
+    rvc.start();
+    resetCounters();
+
+    obstacleAndSideCheck(false, false);
+
+    EXPECT_TRUE(driveMotor.turnCalls.empty());
 }
 
 // ── sideStatus() — CLEANING 상태 (무시) ──────────────────────────────────────
@@ -100,88 +185,111 @@ TEST_F(RVCControllerTest, sideStatus_whenCleaning_isIgnored) {
     rvc.start();
     resetCounters();
 
-    rvc.sideStatus({Direction::LEFT}); // CLEANING 상태이므로 아무 동작 없음
+    rvc.sideStatus(Direction::LEFT, true);
 
+    EXPECT_EQ(driveMotor.rotateRightCount, 0);
     EXPECT_TRUE(driveMotor.turnCalls.empty());
-    EXPECT_TRUE(cleaningMotor.startCalls.empty());
     EXPECT_EQ(driveMotor.forwardCount, 0);
 }
 
-// ── allSidesBlocked() ────────────────────────────────────────────────────────
+// ── sideStatus() — REVERSING: 좌측 여유 ──────────────────────────────────────
 
-TEST_F(RVCControllerTest, allSidesBlocked_stopsCleaning) {
-    rvc.start();
-    resetCounters();
+TEST_F(RVCControllerTest, sideStatus_whenReversing_leftClear_stops) {
+    enterReversingState();
 
-    rvc.allSidesBlocked();
-
-    EXPECT_EQ(cleaningMotor.stopCount, 1);
-}
-
-TEST_F(RVCControllerTest, allSidesBlocked_movesBackward) {
-    rvc.start();
-    resetCounters();
-
-    rvc.allSidesBlocked();
-
-    EXPECT_EQ(driveMotor.backwardCount, 1);
-}
-
-// ── sideStatus() — REVERSING 상태 ────────────────────────────────────────────
-
-TEST_F(RVCControllerTest, sideStatus_whenReversing_withAvailableDir_stopsMotor) {
-    rvc.start();
-    rvc.allSidesBlocked();
-    resetCounters();
-
-    rvc.sideStatus({Direction::RIGHT});
+    rvc.sideStatus(Direction::LEFT, true);
 
     EXPECT_EQ(driveMotor.stopCount, 1);
 }
 
-TEST_F(RVCControllerTest, sideStatus_whenReversing_withAvailableDir_turns) {
-    rvc.start();
-    rvc.allSidesBlocked();
-    resetCounters();
+TEST_F(RVCControllerTest, sideStatus_whenReversing_leftClear_turnsLeft) {
+    enterReversingState();
 
-    rvc.sideStatus({Direction::RIGHT});
+    rvc.sideStatus(Direction::LEFT, true);
 
     ASSERT_EQ(driveMotor.turnCalls.size(), 1u);
-    EXPECT_EQ(driveMotor.turnCalls[0], Direction::RIGHT);
+    EXPECT_EQ(driveMotor.turnCalls[0], Direction::LEFT);
 }
 
-TEST_F(RVCControllerTest, sideStatus_whenReversing_withAvailableDir_movesForward) {
-    rvc.start();
-    rvc.allSidesBlocked();
-    resetCounters();
+TEST_F(RVCControllerTest, sideStatus_whenReversing_leftClear_movesForward) {
+    enterReversingState();
 
-    rvc.sideStatus({Direction::RIGHT});
+    rvc.sideStatus(Direction::LEFT, true);
 
     EXPECT_EQ(driveMotor.forwardCount, 1);
 }
 
-TEST_F(RVCControllerTest, sideStatus_whenReversing_withAvailableDir_restartsCleaning) {
-    rvc.start();
-    rvc.allSidesBlocked();
-    resetCounters();
+TEST_F(RVCControllerTest, sideStatus_whenReversing_leftClear_restartsCleaning) {
+    enterReversingState();
 
-    rvc.sideStatus({Direction::LEFT});
+    rvc.sideStatus(Direction::LEFT, true);
 
     ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
     EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::NORMAL);
 }
 
-// REVERSING 상태에서 가용 방향이 없으면 그대로 후진 유지
-TEST_F(RVCControllerTest, sideStatus_whenReversing_withEmptyDir_isIgnored) {
-    rvc.start();
-    rvc.allSidesBlocked();
-    resetCounters();
+// ── sideStatus() — REVERSING: 좌측 막힘 → rotateRight 호출 ─────────────────
 
-    rvc.sideStatus({}); // 여전히 전방위 막힘 → 아무 동작 없음
+TEST_F(RVCControllerTest, sideStatus_whenReversing_leftBlocked_rotatesRight) {
+    enterReversingState();
 
-    EXPECT_EQ(driveMotor.stopCount, 0);
+    rvc.sideStatus(Direction::LEFT, false);
+
+    EXPECT_EQ(driveMotor.rotateRightCount, 1);
+}
+
+// ── sideStatus() — REVERSING: 우측만 여유 ────────────────────────────────────
+
+TEST_F(RVCControllerTest, sideStatus_whenReversing_rightOnly_turnsRight) {
+    enterReversingState();
+
+    rvc.sideStatus(Direction::LEFT, false);
+    rvc.sideStatus(Direction::RIGHT, true);
+
+    ASSERT_EQ(driveMotor.turnCalls.size(), 1u);
+    EXPECT_EQ(driveMotor.turnCalls[0], Direction::RIGHT);
+}
+
+TEST_F(RVCControllerTest, sideStatus_whenReversing_rightOnly_movesForward) {
+    enterReversingState();
+
+    rvc.sideStatus(Direction::LEFT, false);
+    rvc.sideStatus(Direction::RIGHT, true);
+
+    EXPECT_EQ(driveMotor.forwardCount, 1);
+}
+
+TEST_F(RVCControllerTest, sideStatus_whenReversing_rightOnly_restartsCleaning) {
+    enterReversingState();
+
+    rvc.sideStatus(Direction::LEFT, false);
+    rvc.sideStatus(Direction::RIGHT, true);
+
+    ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
+    EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::NORMAL);
+}
+
+// ── sideStatus() — REVERSING: 좌·우 모두 막힘 (루프 유지) ───────────────────
+
+TEST_F(RVCControllerTest, sideStatus_whenReversing_bothBlocked_noTurnOrForward) {
+    enterReversingState();
+
+    rvc.sideStatus(Direction::LEFT, false);
+    rvc.sideStatus(Direction::RIGHT, false);
+
     EXPECT_TRUE(driveMotor.turnCalls.empty());
     EXPECT_EQ(driveMotor.forwardCount, 0);
+}
+
+TEST_F(RVCControllerTest, sideStatus_whenReversing_bothBlocked_rotatesRightThenLeft) {
+    enterReversingState();
+    resetCounters();
+
+    rvc.sideStatus(Direction::LEFT, false);
+    rvc.sideStatus(Direction::RIGHT, false);
+
+    EXPECT_EQ(driveMotor.rotateRightCount, 1);
+    EXPECT_EQ(driveMotor.rotateLeftCount, 1);
 }
 
 // ── dustDetected() ───────────────────────────────────────────────────────────

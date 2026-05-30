@@ -58,15 +58,16 @@ int main() {
         sim.frontObstacleDetected();
         pause(300);
 
-        section("우측 여유 공간 확인 → 우측 전환");
-        sim.sideStatus({Direction::RIGHT});
+        section("좌측 막힘 확인 → rotateRight → 우측 여유 확인 → rotateLeft → 우측 전환");
+        sim.sideStatus(Direction::LEFT, false);
+        sim.sideStatus(Direction::RIGHT, true);
         stateBox("CLEANING", "전진 ▶", "NORMAL ◎");
     }
 
     pause();
 
     // ──────────────────────────────────────────────────────────
-    header("시나리오 3: 전방 장애물 — 좌측 방향 전환 (UC-002)");
+    header("시나리오 3: 전방 장애물 — 좌측 방향 전환 (UC-002, LEFT 우선)");
     {
         RVCSimulator sim(true);
         section("UC-001 실행 중");
@@ -77,8 +78,9 @@ int main() {
         sim.frontObstacleDetected();
         pause(300);
 
-        section("좌측 여유 공간 확인 → 좌측 전환");
-        sim.sideStatus({Direction::LEFT});
+        section("좌측 여유 확인 → rotateRight → 우측 확인 → rotateLeft → 좌측 전환 (LEFT 우선)");
+        sim.sideStatus(Direction::LEFT, true);
+        sim.sideStatus(Direction::RIGHT, true);
         stateBox("CLEANING", "전진 ▶", "NORMAL ◎");
     }
 
@@ -92,38 +94,46 @@ int main() {
         sim.start();
         pause(300);
 
-        section("전·좌·우 모두 장애물 감지");
-        sim.allSidesBlocked();
+        section("전·좌·우 모두 장애물 — E1 진입 (UC-002 내부 판정)");
+        sim.frontObstacleDetected();
+        sim.sideStatus(Direction::LEFT, false);
+        sim.sideStatus(Direction::RIGHT, false);
         stateBox("REVERSING", "후진 ◀", "OFF ✗");
         pause(300);
 
-        section("후진 중 — 우측 여유 확보");
-        sim.sideStatus({Direction::RIGHT});
+        section("후진 중 — 좌측 막힘 확인 → rotateRight → 우측 여유 확보 → rotateLeft → 우회전");
+        sim.sideStatus(Direction::LEFT, false);
+        sim.sideStatus(Direction::RIGHT, true);
         stateBox("CLEANING", "전진 ▶", "NORMAL ◎");
     }
 
     pause();
 
     // ──────────────────────────────────────────────────────────
-    header("시나리오 5: 삼면 장애물 — 반복 후진 후 방향 확보 (UC-003)");
+    header("시나리오 5: 삼면 장애물 — 반복 후진 후 좌측 확보 (UC-003)");
     {
         RVCSimulator sim(true);
         section("UC-001 실행 중");
         sim.start();
         pause(200);
 
-        sim.allSidesBlocked();
+        section("E1 진입");
+        sim.frontObstacleDetected();
+        sim.sideStatus(Direction::LEFT, false);
+        sim.sideStatus(Direction::RIGHT, false);
         stateBox("REVERSING", "후진 ◀", "OFF ✗");
         pause(200);
 
-        section("후진 중 — 여전히 삼면 막힘 (×2)");
-        sim.sideStatus({});
+        section("후진 중 — 여전히 삼면 막힘 (루프 ×2)");
+        sim.sideStatus(Direction::LEFT, false);
+        sim.sideStatus(Direction::RIGHT, false);
         pause(200);
-        sim.sideStatus({});
+        sim.sideStatus(Direction::LEFT, false);
+        sim.sideStatus(Direction::RIGHT, false);
         pause(200);
 
         section("후진 중 — 좌측 확보");
-        sim.sideStatus({Direction::LEFT});
+        sim.sideStatus(Direction::LEFT, true);
         stateBox("CLEANING", "전진 ▶", "NORMAL ◎");
     }
 

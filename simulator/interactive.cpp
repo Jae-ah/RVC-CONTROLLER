@@ -193,6 +193,14 @@ public:
             log_.push(CYAN "  [Drive] turn(RIGHT)" RESET);
         }
     }
+    void rotateRight() override {
+        rvc_.heading = ::turnRight(rvc_.heading);
+        log_.push(CYAN "  [Drive] rotateRight()" RESET);
+    }
+    void rotateLeft() override {
+        rvc_.heading = ::turnLeft(rvc_.heading);
+        log_.push(CYAN "  [Drive] rotateLeft()" RESET);
+    }
 
 private:
     SimRVC& rvc_;
@@ -387,14 +395,13 @@ private:
         if (inBacktrack_) { tickBacktrack(); return; }
 
         if (isBlocked(rvc.ahead())) {
-            std::vector<Direction> avail;
-            if (!isBlocked(rvc.rside())) avail.push_back(Direction::RIGHT);
-            if (!isBlocked(rvc.lside())) avail.push_back(Direction::LEFT);
+            bool leftClear  = !isBlocked(rvc.lside());
+            bool rightClear = !isBlocked(rvc.rside());
 
-            if (!avail.empty()) {
-                // 모든 avail 방향에 미청소 셀이 없으면 BFS 백트래킹 시작
-                bool allCleaned = std::all_of(avail.begin(), avail.end(),
-                    [&](Direction d) { return scoreDir(d) == 0; });
+            if (leftClear || rightClear) {
+                // 모든 가용 방향에 미청소 셀이 없으면 BFS 백트래킹 시작
+                bool allCleaned = (!leftClear  || scoreDir(Direction::LEFT)  == 0)
+                               && (!rightClear || scoreDir(Direction::RIGHT) == 0);
                 if (allCleaned) {
                     backtrackPath_ = bfsToNearestUnvisited();
                     if (!backtrackPath_.empty()) {
@@ -403,13 +410,22 @@ private:
                         return;
                     }
                 }
-                std::vector<Direction> chosen = {pickBestTurn(avail)};
-                rvcCtrl.frontObstacleDetected();
-                rvcCtrl.sideStatus(chosen);
-            } else {
-                rvcCtrl.allSidesBlocked();
+            }
+
+            // v2.0: frontObstacleDetected → sideStatus(LEFT) → rotateRight (자동) →
+            //        sideStatus(RIGHT) → rotateLeft (자동) → RVC가 방향 결정
+            rvcCtrl.frontObstacleDetected();
+            rvcCtrl.sideStatus(Direction::LEFT, leftClear);
+            // rotateRight()가 호출되어 heading이 우측으로 회전됨
+            bool rightClearAfterRotate = !isBlocked(rvc.ahead());
+            rvcCtrl.sideStatus(Direction::RIGHT, rightClearAfterRotate);
+            // rotateLeft()가 호출되어 heading이 원래 방향으로 복귀됨
+
+            if (!leftClear && !rightClearAfterRotate) {
+                // E1: 좌·우 모두 막힘 → RVC가 moveBackward() 호출, REVERSING 진입
                 phase = Phase::REVERSING;
             }
+            // else: RVC가 turn + moveForward + startCleaning 호출로 이동 완료
         } else {
             auto [nr, nc] = rvc.ahead();
             if (inBounds(nr, nc) && grid[nr][nc] != Cell::WALL) {
@@ -419,15 +435,26 @@ private:
     }
 
     void tickReversing() {
-        std::vector<Direction> avail;
-        if (!isBlocked(rvc.rside())) avail.push_back(Direction::RIGHT);
-        if (!isBlocked(rvc.lside())) avail.push_back(Direction::LEFT);
+        bool leftClear = !isBlocked(rvc.lside());
 
-        if (!avail.empty()) {
-            rvcCtrl.sideStatus({pickBestTurn(avail)});
+        rvcCtrl.sideStatus(Direction::LEFT, leftClear);
+
+        if (leftClear) {
+            // RVC가 stop + turn(LEFT) + moveForward + startCleaning 호출
+            phase = Phase::MOVING_FWD;
+            return;
+        }
+
+        // 좌측 막힘: rotateRight() 자동 호출됨 → heading이 우측으로 회전
+        bool rightClear = !isBlocked(rvc.ahead());
+        rvcCtrl.sideStatus(Direction::RIGHT, rightClear);
+        // rotateLeft() 자동 호출됨 → heading 원래 방향으로 복귀
+
+        if (rightClear) {
+            // RVC가 stop + turn(RIGHT) + moveForward + startCleaning 호출
             phase = Phase::MOVING_FWD;
         } else {
-            rvcCtrl.sideStatus({});
+            // 좌·우 모두 막힘: 계속 후진
             auto [nr, nc] = rvc.behind();
             if (inBounds(nr, nc) && grid[nr][nc] != Cell::WALL) {
                 rvc.row = nr; rvc.col = nc;
@@ -532,11 +559,15 @@ struct RawTerm {
         raw.c_cc[VMIN]  = 0;
         raw.c_cc[VTIME] = 0;
         tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+        std::cout << "\033[?1049h";  // 대안 스크린 버퍼 진입
+        std::cout.flush();
     }
     ~RawTerm() {
         tcsetattr(STDIN_FILENO, TCSANOW, &orig);
+        std::cout << "\033[?1049l";  // 대안 스크린 버퍼 복귀
         showCursor();
         std::cout << RESET "\n";
+        std::cout.flush();
     }
 };
 

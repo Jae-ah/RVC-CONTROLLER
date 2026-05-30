@@ -41,12 +41,14 @@ target_include_directories(rvc_interactive PRIVATE src simulator)
 # ── 시스템 테스트 (Google Test 없음) ─────────────────────────────────────
 add_executable(rvc_system_tests
     ${SRC_FILES}
-    arch/system-tests/SystemTests.cpp
+    system-tests/SystemTests.cpp
 )
-target_include_directories(rvc_system_tests PRIVATE src simulator arch/system-tests)
+target_include_directories(rvc_system_tests PRIVATE src simulator system-tests)
 
 option(ENABLE_COVERAGE "Enable gcov/lcov coverage instrumentation" OFF)
 if(ENABLE_COVERAGE)
-    target_compile_options(rvc_tests PRIVATE --coverage -O0 -g)
-    target_link_options(rvc_tests PRIVATE --coverage)
+    target_compile_options(rvc_tests        PRIVATE --coverage -O0 -g)
+    target_link_options(rvc_tests           PRIVATE --coverage)
+    target_compile_options(rvc_system_tests PRIVATE --coverage -O0 -g)
+    target_link_options(rvc_system_tests    PRIVATE --coverage)
 endif()

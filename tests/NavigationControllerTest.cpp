@@ -26,41 +26,28 @@ TEST_F(NavigationControllerTest, stop_delegatesToMotor) {
     EXPECT_EQ(motor.stopCount, 1);
 }
 
-// turn() — 빈 목록이면 모터를 호출하지 않음
-TEST_F(NavigationControllerTest, turn_emptyList_doesNotCallMotor) {
-    controller.turn({});
-
-    EXPECT_TRUE(motor.turnCalls.empty());
-}
-
-// turn() — 방향이 하나이면 해당 방향으로만 회전
-TEST_F(NavigationControllerTest, turn_singleLeft_turnsLeft) {
-    controller.turn({Direction::LEFT});
+TEST_F(NavigationControllerTest, turn_left_delegatesToMotor) {
+    controller.turn(Direction::LEFT);
 
     ASSERT_EQ(motor.turnCalls.size(), 1u);
     EXPECT_EQ(motor.turnCalls[0], Direction::LEFT);
 }
 
-TEST_F(NavigationControllerTest, turn_singleRight_turnsRight) {
-    controller.turn({Direction::RIGHT});
+TEST_F(NavigationControllerTest, turn_right_delegatesToMotor) {
+    controller.turn(Direction::RIGHT);
 
     ASSERT_EQ(motor.turnCalls.size(), 1u);
     EXPECT_EQ(motor.turnCalls[0], Direction::RIGHT);
 }
 
-// turn() — 방향이 여러 개이면 그 중 하나를 선택해 회전
-TEST_F(NavigationControllerTest, turn_multipleDirections_picksExactlyOne) {
-    controller.turn({Direction::LEFT, Direction::RIGHT});
+TEST_F(NavigationControllerTest, rotateRight_delegatesToMotor) {
+    controller.rotateRight();
 
-    ASSERT_EQ(motor.turnCalls.size(), 1u);
-    const Direction chosen = motor.turnCalls[0];
-    EXPECT_TRUE(chosen == Direction::LEFT || chosen == Direction::RIGHT);
+    EXPECT_EQ(motor.rotateRightCount, 1);
 }
 
-// turn() — 호출할 때마다 모터에 정확히 한 번만 전달
-TEST_F(NavigationControllerTest, turn_calledTwice_motorCalledTwice) {
-    controller.turn({Direction::LEFT});
-    controller.turn({Direction::RIGHT});
+TEST_F(NavigationControllerTest, rotateLeft_delegatesToMotor) {
+    controller.rotateLeft();
 
-    EXPECT_EQ(motor.turnCalls.size(), 2u);
+    EXPECT_EQ(motor.rotateLeftCount, 1);
 }
