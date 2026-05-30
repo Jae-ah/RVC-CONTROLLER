@@ -103,7 +103,7 @@ jobs:
             -I src \
             src/ \
             simulator/ \
-            arch/system-tests/
+            system-tests/
 
   # ── clang-tidy ────────────────────────────────────────────────────────────
   clang-tidy:
