@@ -258,9 +258,6 @@ struct Simulation {
     bool    paused  = false;
     bool    done    = false;
     int     cleaned = 0;
-    Heading sweepH_          = Heading::EAST;
-    Heading advanceH_        = Heading::SOUTH;
-    bool    needTurnToSweep_ = false;
     bool    inBacktrack_     = false;
     std::vector<std::pair<int,int>> backtrackPath_;
 
@@ -282,12 +279,7 @@ struct Simulation {
     void tick() {
         if (paused || done) return;
 
-        if (needTurnToSweep_) {
-            // 한 칸 전진(행 이동) 직후: 새 스윕 방향으로 헤딩 전환 (이동 없음)
-            needTurnToSweep_ = false;
-            rvc.heading = sweepH_;
-            log.push(std::string(CYAN) + "  [Sweep] 방향 전환→" + headingName(sweepH_) + RESET);
-        } else if (phase == Phase::MOVING_FWD) {
+        if (phase == Phase::MOVING_FWD) {
             tickMovingFwd();
         } else {
             tickReversing();
@@ -342,53 +334,6 @@ private:
             r += dr; c += dc;
         }
         return score;
-    }
-
-    // 현재 헤딩 기준 target 방향으로 90° 회전하는 Direction 반환
-    Direction turnDirTo(Heading target) const {
-        return (::turnRight(rvc.heading) == target) ? Direction::RIGHT : Direction::LEFT;
-    }
-
-    // 바운스트로펜(S자) 전체 공간 커버리지 방향 선택
-    // 핵심: 스윕 끝에서 한 행만 전진 후 needTurnToSweep_ 플래그로 복귀
-    Direction pickBestTurn(const std::vector<Direction>& avail) {
-        auto inAvail = [&](Direction d) {
-            return std::find(avail.begin(), avail.end(), d) != avail.end();
-        };
-
-        // ① 스윕 방향으로 이동 중 막힘 → 한 행 전진 + sweepH_ 반전 (S자 핵심)
-        if (rvc.heading == sweepH_) {
-            Direction advDir = turnDirTo(advanceH_);
-            if (inAvail(advDir)) {
-                sweepH_          = (sweepH_ == Heading::EAST) ? Heading::WEST : Heading::EAST;
-                needTurnToSweep_ = true;
-                return advDir;
-            }
-            // advanceH_ 반대 방향 시도 (예: 남쪽 막혔을 때 북쪽으로)
-            Heading oppAdv = (advanceH_ == Heading::SOUTH) ? Heading::NORTH : Heading::SOUTH;
-            Direction oppDir = turnDirTo(oppAdv);
-            if (inAvail(oppDir)) {
-                advanceH_        = oppAdv;
-                sweepH_          = (sweepH_ == Heading::EAST) ? Heading::WEST : Heading::EAST;
-                needTurnToSweep_ = true;
-                return oppDir;
-            }
-        }
-
-        // ② 전진(행 이동) 중 막힘 → sweepH_ 방향으로 조기 전환
-        if (rvc.heading == advanceH_) {
-            Direction toSweep = turnDirTo(sweepH_);
-            if (inAvail(toSweep)) return toSweep;
-        }
-
-        // ③ 폴백: 미청소 셀이 많은 방향 선택
-        bool rOk = inAvail(Direction::RIGHT);
-        bool lOk = inAvail(Direction::LEFT);
-        int  rs  = rOk ? scoreDir(Direction::RIGHT) : -1;
-        int  ls  = lOk ? scoreDir(Direction::LEFT)  : -1;
-        if (rs != ls) return (rs > ls) ? Direction::RIGHT : Direction::LEFT;
-        Direction toSweepDir = turnDirTo(sweepH_);
-        return inAvail(toSweepDir) ? toSweepDir : avail[0];
     }
 
     void tickMovingFwd() {
