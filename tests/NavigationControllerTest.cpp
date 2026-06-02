@@ -21,6 +21,7 @@ TEST_F(NavigationControllerTest, moveBackward_delegatesToMotor) {
 }
 
 TEST_F(NavigationControllerTest, stop_delegatesToMotor) {
+    controller.moveForward();  // STOPPED → FORWARD 선행 상태 설정
     controller.stop();
 
     EXPECT_EQ(motor.stopCount, 1);

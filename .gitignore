@@ -67,3 +67,16 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# macOS
+.DS_Store
+
+# Claude Code
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# Report generation script
+gen_report.py

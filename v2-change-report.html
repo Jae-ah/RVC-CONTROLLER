@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RVC v2.0 변경 보고서</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Helvetica,Arial,sans-serif;
+  font-size:15px;color:#37352f;background:#fff;display:flex;min-height:100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:240px;min-width:240px;background:#f7f6f3;border-right:1px solid #e8e8e4;
+  height:100vh;position:sticky;top:0;overflow-y:auto;
+  padding:20px 10px 60px;
+}
+.sidebar-title{font-size:13px;font-weight:700;color:#37352f;padding:4px 8px 2px;}
+.sidebar-sub{font-size:11px;color:#9b9a97;padding:0 8px 12px;border-bottom:1px solid #e8e8e4;margin-bottom:10px;}
+
+.totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;padding:0 4px;margin-bottom:14px;}
+.tot{
+  text-align:center;padding:9px 4px;border-radius:8px;
+  font-weight:700;font-size:18px;line-height:1.2;
+}
+.tot span{display:block;font-size:10px;font-weight:400;margin-top:3px;opacity:.8;}
+.ta{background:#e3f9e5;color:#0e8a2a;}
+.td{background:#fde8ea;color:#9b1c1c;}
+.tc{background:#fef3cd;color:#7d5a00;}
+
+.toc-label{
+  font-size:10px;font-weight:600;color:#9b9a97;
+  text-transform:uppercase;letter-spacing:.08em;
+  padding:0 8px;margin-bottom:6px;
+}
+.toc-list{list-style:none;}
+.toc-list li{margin:1px 0;}
+.toc-link{
+  display:flex;align-items:center;gap:4px;
+  color:#6b6b6b;text-decoration:none;
+  padding:4px 8px;border-radius:4px;font-size:12px;line-height:1.4;
+}
+.toc-link:hover{background:#eae9e6;color:#37352f;}
+.toc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.toc-badges{display:flex;gap:3px;flex-shrink:0;}
+.tb{
+  font-size:10px;font-weight:700;padding:1px 5px;
+  border-radius:6px;white-space:nowrap;
+}
+.tb-a{background:#d4edda;color:#155724;}
+.tb-d{background:#f8d7da;color:#721c24;}
+.tb-c{background:#fff3cd;color:#856404;}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-thumb{background:#d4d3cf;border-radius:2px;}
+
+/* ── Main ── */
+main{flex:1;padding:52px 80px 120px;min-width:0;}
+
+/* ── Cover ── */
+.cover{margin-bottom:64px;}
+.cover-icon{font-size:56px;line-height:1;margin-bottom:16px;}
+.cover h1{font-size:38px;font-weight:700;color:#37352f;line-height:1.25;margin-bottom:6px;}
+.cover .subtitle{color:#9b9a97;font-size:14px;line-height:1.6;margin-bottom:18px;}
+.cover-badges{display:flex;flex-wrap:wrap;gap:8px;}
+.cbadge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
+}
+.cbadge-add{background:#e3f9e5;color:#0e8a2a;}
+.cbadge-del{background:#fde8ea;color:#9b1c1c;}
+.cbadge-chg{background:#fef3cd;color:#7d5a00;}
+.cbadge-file{background:#eee;color:#666;}
+
+/* ── Section ── */
+.page-section{margin-bottom:72px;}
+.section-top{margin-bottom:20px;}
+.file-path{
+  display:inline-block;font-family:'Consolas','Monaco',monospace;
+  font-size:11px;color:#9b9a97;background:#f1f1ef;
+  padding:2px 8px;border-radius:4px;margin-bottom:8px;
+}
+.page-title{font-size:26px;font-weight:700;color:#37352f;line-height:1.3;margin-bottom:10px;}
+.title-rule{border:none;border-top:1px solid #e8e8e4;}
+
+/* ── Stats pills ── */
+.stats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;}
+.st{font-size:12px;font-weight:600;padding:3px 10px;border-radius:10px;}
+.st-a{background:#e3f9e5;color:#0e8a2a;}
+.st-d{background:#fde8ea;color:#9b1c1c;}
+.st-c{background:#fef3cd;color:#7d5a00;}
+.st-t{background:#f1f1ef;color:#6b6b6b;}
+
+/* ── Table ── */
+.ct{width:100%;border-collapse:collapse;font-size:14px;}
+.ct thead tr{background:#f7f6f3;}
+.ct th{
+  padding:8px 12px;text-align:left;
+  font-size:11px;color:#6b6b6b;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:2px solid #e8e8e4;
+}
+.ct td{
+  padding:10px 12px;border-bottom:1px solid #f1f1ef;
+  vertical-align:top;line-height:1.7;
+}
+.ct tr:last-child td{border-bottom:none;}
+
+/* row colors */
+.row-add{background:#f6fdf7;}
+.row-add:hover{background:#eaf7ed;}
+.row-del{background:#fdf6f6;}
+.row-del:hover{background:#faeaea;}
+.row-chg{background:#fdfdf5;}
+.row-chg:hover{background:#f7f7e0;}
+
+/* ── Badges (구분 column) ── */
+.bc{width:76px;padding-top:11px;vertical-align:top;}
+.badge{
+  display:inline-block;font-size:10.5px;font-weight:700;
+  padding:2px 9px;border-radius:10px;letter-spacing:.02em;margin-bottom:3px;
+}
+.badge-add{background:#28a745;color:#fff;}
+.badge-del{background:#dc3545;color:#fff;}
+.badge-chg{background:#e8a800;color:#333;}
+
+/* ── Inline change tags ── */
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;
+  padding:1px 6px;border-radius:4px;margin-right:2px;
+  vertical-align:middle;white-space:nowrap;
+}
+.tag-add{background:#28a745;color:#fff;}
+.tag-del{background:#dc3545;color:#fff;}
+.tag-chg{background:#e8a800;color:#333;}
+
+del{color:#c0392b;opacity:.8;text-decoration-color:#c0392b;}
+
+code{
+  font-family:'Consolas','Monaco','Menlo',monospace;
+  font-size:13px;background:#f1f1ef;padding:1px 5px;
+  border-radius:3px;color:#e03e2d;
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-title">RVC SW Controller</div>
+  <div class="sidebar-sub">v2.0 변경 보고서</div>
+  <div class="totals">
+    <div class="tot ta">52<span>추가</span></div>
+    <div class="tot td">10<span>삭제</span></div>
+    <div class="tot tc">61<span>변경</span></div>
+  </div>
+  <div class="toc-label">목차</div>
+  <ul class="toc-list">
+    <li><a href="#CLAUDE-md" class="toc-link"><span class="toc-name">프로젝트 설정</span><span class="toc-badges"><span class="tb tb-a">3</span><span class="tb tb-c">1</span></span></a></li>
+    <li><a href="#arch-requirements-fr-nfr-md" class="toc-link"><span class="toc-name">기능/비기능 요구사항</span><span class="toc-badges"><span class="tb tb-c">4</span></span></a></li>
+    <li><a href="#arch-system-md" class="toc-link"><span class="toc-name">시스템 정의</span><span class="toc-badges"><span class="tb tb-c">4</span></span></a></li>
+    <li><a href="#arch-usecases-usecases-md" class="toc-link"><span class="toc-name">Use Case 목록</span><span class="toc-badges"><span class="tb tb-c">4</span></span></a></li>
+    <li><a href="#arch-usecases-UC-001-md" class="toc-link"><span class="toc-name">UC-001: 자동 청소 수행</span><span class="toc-badges"><span class="tb tb-d">1</span><span class="tb tb-c">1</span></span></a></li>
+    <li><a href="#arch-usecases-UC-002-md" class="toc-link"><span class="toc-name">UC-002: 측면 장애물 회피</span><span class="toc-badges"><span class="tb tb-a">3</span><span class="tb tb-c">8</span></span></a></li>
+    <li><a href="#arch-usecases-UC-003-md" class="toc-link"><span class="toc-name">UC-003: 삼면 장애물 후진 회피</span><span class="toc-badges"><span class="tb tb-a">4</span><span class="tb tb-c">7</span></span></a></li>
+    <li><a href="#arch-analysis-ssd-SSD-002-md" class="toc-link"><span class="toc-name">SSD-002: 측면 장애물 회피</span><span class="toc-badges"><span class="tb tb-a">2</span><span class="tb tb-c">1</span></span></a></li>
+    <li><a href="#arch-analysis-ssd-SSD-003-md" class="toc-link"><span class="toc-name">SSD-003: 삼면 장애물 후진 회피</span><span class="toc-badges"><span class="tb tb-a">2</span><span class="tb tb-d">1</span><span class="tb tb-c">1</span></span></a></li>
+    <li><a href="#arch-analysis-domain-domain-md" class="toc-link"><span class="toc-name">도메인 모델</span><span class="toc-badges"><span class="tb tb-a">1</span><span class="tb tb-d">1</span><span class="tb tb-c">4</span></span></a></li>
+    <li><a href="#arch-design-sd-SD-002-md" class="toc-link"><span class="toc-name">SD-002: 측면 장애물 회피</span><span class="toc-badges"><span class="tb tb-a">2</span><span class="tb tb-c">2</span></span></a></li>
+    <li><a href="#arch-design-sd-SD-003-md" class="toc-link"><span class="toc-name">SD-003: 삼면 장애물 후진 회피</span><span class="toc-badges"><span class="tb tb-a">2</span><span class="tb tb-d">1</span><span class="tb tb-c">3</span></span></a></li>
+    <li><a href="#arch-design-class-class-diagram-md" class="toc-link"><span class="toc-name">클래스 다이어그램</span><span class="toc-badges"><span class="tb tb-a">10</span><span class="tb tb-d">1</span><span class="tb tb-c">6</span></span></a></li>
+    <li><a href="#src-code-md" class="toc-link"><span class="toc-name">src/ 코드 변경 이력</span><span class="toc-badges"><span class="tb tb-a">23</span><span class="tb tb-d">5</span><span class="tb tb-c">15</span></span></a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="cover">
+    <div class="cover-icon">📋</div>
+    <h1>v2.0 변경 보고서</h1>
+    <p class="subtitle">오른쪽 전용 센서 삭제 · 전방 센서 회전 스캔(rotateRight/Left) 도입 · 장애물 회피 방향 좌측 우선 적용</p>
+    <div class="cover-badges">
+      <span class="cbadge cbadge-add">✚ 추가 52건</span>
+      <span class="cbadge cbadge-del">✕ 삭제 10건</span>
+      <span class="cbadge cbadge-chg">~ 변경 61건</span>
+      <span class="cbadge cbadge-file">📄 14개 파일</span>
+    </div>
+  </div>
+
+<section class="page-section" id="CLAUDE-md">
+  <div class="section-top">
+    <span class="file-path">CLAUDE.md</span>
+    <h1 class="page-title">프로젝트 설정</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 3건</span><span class="st st-d">✕ 삭제 0건</span><span class="st st-c">~ 변경 1건</span><span class="st st-t">합계 4건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> v2.0 작업 지시 사항</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 오른쪽 전용 센서는 존재하지 않는다. 우측 장애물 감지는 전방 센서를 이용한 회전 스캔으로 대체한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>장애물 회피 시 좌/우 방향은 랜덤으로 선택한다</del> → 장애물 회피 시 좌측을 우선으로 선택한다. 좌측이 막힌 경우에만 우측으로 전환한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 변경 이력</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-requirements-fr-nfr-md">
+  <div class="section-top">
+    <span class="file-path">arch/requirements/fr-nfr.md</span>
+    <h1 class="page-title">기능/비기능 요구사항</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-c">~ 변경 4건</span><span class="st st-t">합계 4건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><strong>입력</strong>: <span class="tag tag-chg">변경</span> <del>전방 장애물 감지 신호 (장애물 센서)</del> 전방 장애물 감지 신호 (전방 센서); 우측 여유 공간 감지 (전방 센서 회전 스캔으로 대체, 우측 전용 센서 없음); 좌측 여유 공간 감지 (좌측 센서)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><strong>선택 정책</strong>: <span class="tag tag-chg">변경</span> <del>좌/우 모두 여유 있으면 랜덤으로 방향을 선택한다</del> 좌측을 우선으로 선택한다. 좌측이 막힌 경우에만 우측으로 선택한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><strong>입력</strong>: <span class="tag tag-chg">변경</span> <del>전방·좌·우 장애물 감지 신호 동시 수신</del> 전방·좌측 장애물 감지 신호 동시 수신 (우측 장애물 감지는 전방 센서 회전 스캔으로 대체, 우측 전용 센서 없음)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><strong>선택 정책</strong>: <span class="tag tag-chg">변경</span> <del>후진 중 좌/우 모두 동시에 여유 공간이 확보되면 랜덤으로 방향을 선택한다</del> 후진 중 좌/우 여유 공간이 확보되면 좌측을 우선으로 선택한다. 좌측이 막힌 경우에만 우측으로 선택한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-system-md">
+  <div class="section-top">
+    <span class="file-path">arch/system.md</span>
+    <h1 class="page-title">시스템 정의</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-c">~ 변경 4건</span><span class="st st-t">합계 4건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>SR-03 | <span class="tag tag-chg">변경</span> <del>센서가</del> 전방 센서가 장애물을 감지하면 청소를 멈추고, 좌/우로 방향을 틀어 청소하며 전진한다</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>장애물 센서 | 입력 | <span class="tag tag-chg">변경</span> <del>전방/좌/우 장애물 감지 신호</del> 전방·좌측 장애물 감지 신호 (우측 전용 센서 없음, 우측 감지는 전방 센서 회전 스캔으로 대체)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>장애물 회피 (측면 여유 있음): 전방 장애물 감지 → 청소 정지 → <span class="tag tag-chg">변경</span> <del>좌 또는 우로 회전</del> 좌측 우선으로 회전 (좌측이 막힌 경우에만 우측) → 청소 재개 및 전진.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>장애물 회피 (삼면 막힘): 전/좌/우 장애물 모두 감지 → 후진 → <span class="tag tag-chg">변경</span> <del>좌 또는 우로 회전</del> 좌측 우선으로 회전 (좌측이 막힌 경우에만 우측) → 전진.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-usecases-usecases-md">
+  <div class="section-top">
+    <span class="file-path">arch/usecases/usecases.md</span>
+    <h1 class="page-title">Use Case 목록</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-c">~ 변경 4건</span><span class="st st-t">합계 4건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>ObstacleSensor | Primary Actor | <span class="tag tag-chg">변경</span> <del>전방/좌/우 장애물 감지 신호를 시스템에 전달한다</del> 전방/좌 장애물 감지 신호를 시스템에 전달한다. 우측 장애물 감지는 전방 센서 회전 스캔으로 대체한다 (우측 전용 센서 없음).</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>UC-003 | 삼면 장애물 후진 회피 | <span class="tag tag-chg">변경</span> <del>ObstacleSensor, DriveMotor</del> ObstacleSensor, DriveMotor, CleaningMotor | FR-03</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>전방에 장애물이 감지되면 청소를 일시 정지하고, <span class="tag tag-chg">변경</span> <del>좌 또는 우 중 여유 공간이 있을 때</del> sideStatus(LEFT) 및 rotateRight() + sideStatus(RIGHT) 로 양측을 순차 확인한다. <span class="tag tag-chg">변경</span> <del>좌·우 모두 여유 있으면 랜덤으로 방향을 선택한다.</del> 좌측을 우선으로 선택한다. 좌측이 막힌 경우에만 우측으로 선택한다. 좌·우 모두 막힌 경우 E1으로 UC-003에 진입한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>전방·좌·우 모두 장애물이 감지될 때 ObstacleSensor가 직접 트리거한다.</del> UC-002 E1에서 진입한다 (sideStatus(LEFT, blocked) + sideStatus(RIGHT, blocked) 내부 판정). 후진하며 sideStatus(LEFT) 또는 rotateRight() + sideStatus(RIGHT)로 여유 공간을 확인하고, 확보되면 <span class="tag tag-chg">변경</span> <del>랜덤으로</del> 좌측을 우선으로 선택하여 회전하고 전진한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-usecases-UC-001-md">
+  <div class="section-top">
+    <span class="file-path">arch/usecases/UC-001.md</span>
+    <h1 class="page-title">UC-001: 자동 청소 수행</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-d">✕ 삭제 1건</span><span class="st st-c">~ 변경 1건</span><span class="st st-t">합계 2건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>EP-1 | <span class="tag tag-chg">변경</span> <del>frontObstacleDetected AND (좌 OR 우 여유 있음)</del> frontObstacleDetected (좌·우 여유 공간 확인은 UC-002 내에서 sideStatus(LEFT) → rotateRight() + sideStatus(RIGHT) 순으로 수행) | UC-002</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><span class="tag tag-del">삭제</span> <del>EP-2</del> | | <del>UC-003</del> (UC-002 E1 예외 흐름으로 이동)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-usecases-UC-002-md">
+  <div class="section-top">
+    <span class="file-path">arch/usecases/UC-002.md</span>
+    <h1 class="page-title">UC-002: 측면 장애물 회피</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 3건</span><span class="st st-c">~ 변경 8건</span><span class="st st-t">합계 11건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>좌 또는 우 중 하나 이상의 방향에 여유 공간이 있다.</del> 좌·우 여유 공간 여부는 이 UC 내부에서 순차 확인한다 (진입 시점에 미결정).</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>RVC가 장애물이 없는 방향(좌 또는 우)으로 회전한 뒤, 청소를 재개하며 전진하고 있다.</del> (정상) 좌 또는 우로 회전 후 청소를 재개하며 전진한다. / (예외 E1) 좌·우 모두 막힌 경우 UC-003으로 전환한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>4 | ObstacleSensor | <span class="tag tag-chg">변경</span> <del>좌측 장애물 유무 신호를 시스템에 전달한다.</del> sideStatus(LEFT, status) — 좌측 센서가 좌측 장애물 유무 신호를 시스템에 전달한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>5 | System | <span class="tag tag-add">추가</span> DriveMotor에 rotateRight()를 명령한다 (전방 센서를 우측으로 회전).</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>6 | ObstacleSensor | <span class="tag tag-add">추가</span> sideStatus(RIGHT, status) — 전방 센서(우측 향함)가 우측 장애물 유무 신호를 시스템에 전달한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>7 | System | <span class="tag tag-add">추가</span> DriveMotor에 rotateLeft()를 명령한다 (정면 복귀). 이후 turn()이 원래 전방 기준으로 동작하도록 보장한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>8 | System | <span class="tag tag-chg">변경</span> <del>여유 있는 방향(좌 또는 우)으로 DriveMotor를 회전시킨다.</del> 좌측이 여유 있으면 좌회전한다. 좌측이 막히고 우측이 여유 있으면 우회전한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>A1: <span class="tag tag-chg">변경</span> <del>좌·우 모두 여유 있을 때</del> 좌측 여유 우선 선택</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>단계 5에서 좌·우 모두 여유 있으면 랜덤으로 방향을 선택하여 회전한다.</del> 단계 7에서 좌측이 여유 있으면 좌측을 우선으로 선택한다. 좌·우 모두 여유 있더라도 항상 좌측을 선택한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>E1: <span class="tag tag-chg">변경</span> <del>회피 도중 전/좌/우 모두 막힘</del> 좌·우 모두 막힘 확인 후 UC-003 전환</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>단계 5 이전에 삼면이 모두 막힌 것이 감지되면 UC-003으로 전환한다.</del> 단계 7(rotateLeft 정면 복귀) 완료 후 sideStatus(LEFT)와 sideStatus(RIGHT) 모두 막힘이면 UC-003으로 전환한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-usecases-UC-003-md">
+  <div class="section-top">
+    <span class="file-path">arch/usecases/UC-003.md</span>
+    <h1 class="page-title">UC-003: 삼면 장애물 후진 회피</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 4건</span><span class="st st-c">~ 변경 7건</span><span class="st st-t">합계 11건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>액터 | ObstacleSensor (Primary), DriveMotor (Secondary), <span class="tag tag-add">추가</span> CleaningMotor (Secondary)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>종류 | <span class="tag tag-chg">변경</span> <del>Extension of UC-001 (EP-2)</del> Extension of UC-002 (E1)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>전방·좌·우 방향 모두에 장애물이 감지되었다.</del> UC-002 내에서 sideStatus(LEFT, blocked) 및 sideStatus(RIGHT, blocked) 가 모두 수신되어 좌·우 모두 막힘이 확인되었다 (UC-002 E1). 우측 전용 센서 없음.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>1 | (UC-002 E1) | <span class="tag tag-chg">변경</span> <del>ObstacleSensor: 전방·좌측 장애물 감지 신호를 전달한다.</del> 좌·우 모두 막힘이 확인된 상태로 UC-002 E1에서 진입한다. (CleaningMotor는 UC-002 단계 2에서 이미 정지됨.)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>3 | ObstacleSensor | <span class="tag tag-chg">변경</span> <del>좌측 장애물 유무 신호를 계속 전달한다.</del> sideStatus(LEFT, status) — 좌측 센서가 좌측 장애물 유무 신호를 전달한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>4 | System | <span class="tag tag-add">추가</span> 좌측이 여전히 막힌 경우 DriveMotor에 rotateRight()를 명령한다 (전방 센서를 우측으로 회전).</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>5 | ObstacleSensor | <span class="tag tag-add">추가</span> sideStatus(RIGHT, status) — 전방 센서(우측 향함)가 우측 장애물 유무 신호를 전달한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td>6 | System | <span class="tag tag-add">추가</span> rotateRight()를 호출한 경우 DriveMotor에 rotateLeft()를 명령한다 (정면 복귀).</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>9 | System | <span class="tag tag-chg">변경</span> <del>여유 공간이 확보된 방향(좌 또는 우)으로 DriveMotor를 회전시킨다.</del> 좌측에 여유 공간이 확보된 경우 좌회전한다. 좌측이 막힌 경우에만 우측으로 DriveMotor를 회전시킨다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>A1: <span class="tag tag-chg">변경</span> <del>후진 중 좌·우 동시에 여유 공간 확보</del> 후진 중 좌측 여유 공간 우선 선택</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>단계 5에서 좌·우 모두 동시에 해소되면 랜덤으로 방향을 선택하여 회전한다.</del> 단계 3에서 sideStatus(LEFT, clear)가 수신되면 단계 4~6을 건너뛰고 즉시 좌회전한다. 좌·우 모두 동시에 확보되더라도 항상 좌측을 우선으로 선택한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-analysis-ssd-SSD-002-md">
+  <div class="section-top">
+    <span class="file-path">arch/analysis/ssd/SSD-002.md</span>
+    <h1 class="page-title">SSD-002: 측면 장애물 회피</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 2건</span><span class="st st-c">~ 변경 1건</span><span class="st st-t">합계 3건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del><code>sideStatus(available)</code></del> <code>sideStatus(LEFT, status)</code> | <span class="tag tag-chg">변경</span> <del>여유 공간이 있는 방향(Direction)의 목록을 수신한다</del> 좌측 센서가 좌측 장애물 유무 신호를 전달한다. 회전 없이 직접 수신.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>sideStatus(RIGHT, status)</code> | DriveMotor.rotateRight() 이후 전방 센서(우측 향함)가 우측 장애물 유무 신호를 전달한다 (우측 전용 센서 없음).</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>rotateLeft()</code> | sideStatus(RIGHT) 수신 후 DriveMotor를 정면으로 복귀시킨다. 이후 turn()이 항상 원래 전방 기준으로 동작하도록 보장한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-analysis-ssd-SSD-003-md">
+  <div class="section-top">
+    <span class="file-path">arch/analysis/ssd/SSD-003.md</span>
+    <h1 class="page-title">SSD-003: 삼면 장애물 후진 회피</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 2건</span><span class="st st-d">✕ 삭제 1건</span><span class="st st-c">~ 변경 1건</span><span class="st st-t">합계 4건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><span class="tag tag-del">삭제</span> UC-002 내에서 sideStatus(LEFT) + sideStatus(RIGHT) 결과로 내부 판정 후 UC-003에 직접 진입. 별도 외부 오퍼레이션 없음.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del><code>sideStatus(available)</code></del> <code>sideStatus(LEFT, status)</code> | <span class="tag tag-chg">변경</span> <del>후진 중 좌·우 여유 공간 목록 수신</del> 후진 중 좌측 센서가 좌측 장애물 유무를 전달한다. 반복 수신.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>sideStatus(RIGHT, status)</code> | 좌측 막힘 시 rotateRight() 이후 전방 센서(우측 향함)가 우측 장애물 유무를 전달한다. 좌측 여유 확보 시 생략.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>rotateLeft()</code> | 좌측 막힘 시 sideStatus(RIGHT) 수신 후 DriveMotor를 정면으로 복귀시킨다. 루프 재진입 및 최종 turn() 모두 원래 전방 기준으로 동작하도록 보장한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-analysis-domain-domain-md">
+  <div class="section-top">
+    <span class="file-path">arch/analysis/domain/domain.md</span>
+    <h1 class="page-title">도메인 모델</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 1건</span><span class="st st-d">✕ 삭제 1건</span><span class="st st-c">~ 변경 4건</span><span class="st st-t">합계 6건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>센서 데이터는 시스템 오퍼레이션의 파라미터로 전달된다. <span class="tag tag-chg">변경</span> <del><code>sideStatus(available)</code></del> 좌·우 각각 <code>sideStatus(LEFT, status)</code> / <code>sideStatus(RIGHT, status)</code> 두 번의 별도 호출로 분리된다. 우측은 <code>rotateRight()</code> 이후 전방 센서가 전달한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>ObstacleSensor | <span class="tag tag-chg">변경</span> <del>장애물 감지 이벤트를 RVCController에 전달한다</del> 전방·좌측 장애물 감지 이벤트를 RVCController에 전달한다. sideStatus(LEFT)는 좌측 센서가 직접 전달하고, sideStatus(RIGHT)는 DriveMotor.rotateRight() 이후 전방 센서가 전달한다 (우측 전용 센서 없음).</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span><span class="badge badge-chg">변경</span></td><td>RVCController | <span class="tag tag-chg">변경</span> <del>시스템 오퍼레이션(start, frontObstacleDetected, <span class="tag tag-del">삭제</span>, sideStatus, dustDetected)을 수신한다.</del> 시스템 오퍼레이션 (start, frontObstacleDetected, sideStatus(LEFT, status), sideStatus(RIGHT, status), dustDetected)을 수신하고 NavigationController·CleaningController에 위임한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span><span class="badge badge-chg">변경</span></td><td>NavigationController | DriveMotor를 제어한다. <span class="tag tag-chg">변경</span> <del>방향 선택 로직(양쪽 여유 시 랜덤)을 포함한다</del> 방향 선택 로직(좌측 우선; 좌측이 막힌 경우에만 우측)을 포함한다. <span class="tag tag-add">추가</span> <code>rotateLeft()</code>로 우측 스캔 후 정면 복귀한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-design-sd-SD-002-md">
+  <div class="section-top">
+    <span class="file-path">arch/design/sd/SD-002.md</span>
+    <h1 class="page-title">SD-002: 측면 장애물 회피</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 2건</span><span class="st st-c">~ 변경 2건</span><span class="st st-t">합계 4건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del><code>NavigationController.turn(available)</code> — <code>Direction</code> 목록을 받아 방향 선택 로직(랜덤 포함)을 NavigationController 내부에서 수행한다 (SRP)</del> <code>NavigationController.turn(direction: Direction)</code> — 단일 방향을 받아 회전한다. 방향 선택(좌측 우선)은 RVCController가 두 sideStatus 결과로 결정한 뒤 전달한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>예외 흐름 E1 (좌·우 모두 막힘): <code>sideStatus([])</code> 수신 시(available이 빈 리스트) RVCController가 UC-003 흐름으로 전환한다</del> 예외 흐름 E1: sideStatus(LEFT, blocked) AND sideStatus(RIGHT, blocked) 수신 시 RVCController가 UC-003 흐름으로 전환한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>rotateRight()</code> — RVCController → NavigationController → DriveMotor 순으로 위임하여 전방 센서를 우측으로 회전시킨다. sideStatus(LEFT) 수신 직후, sideStatus(RIGHT) 수신 직전에 호출한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>rotateLeft()</code> — sideStatus(RIGHT) 수신 직후 정면으로 복귀한다. 이후 turn(LEFT)/turn(RIGHT)이 모두 원래 전방 기준으로 대칭 동작하도록 보장한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-design-sd-SD-003-md">
+  <div class="section-top">
+    <span class="file-path">arch/design/sd/SD-003.md</span>
+    <h1 class="page-title">SD-003: 삼면 장애물 후진 회피</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 2건</span><span class="st st-d">✕ 삭제 1건</span><span class="st st-c">~ 변경 3건</span><span class="st st-t">합계 6건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>청소 재개(<code>startCleaning</code>)는 전진 시작 이후에 호출한다 (UC-003 기본 흐름 8→9 순서)</del> 청소 재개(<code>startCleaning</code>)는 전진(<code>moveForward</code>) 이후에 호출한다 (UC-003 기본 흐름 9→10 순서).</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>후진 중 루프를 탈출하는 조건: <code>available</code>이 비어 있지 않을 때</del> 후진 중 루프 탈출 조건: sideStatus(LEFT, clear) 또는 sideStatus(RIGHT, clear) 중 하나라도 수신될 때.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del>방향 선택 로직은 SD-002와 동일하게 NavigationController 내부에서 수행한다</del> 방향 선택(좌측 우선)은 RVCController가 sideStatus 결과로 결정하고 NavigationController에 단일 방향을 전달한다.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> UC-003은 UC-002 E1에서 진입한다. CleaningMotor는 UC-002에서 이미 정지된 상태이므로 이 SD에서 별도의 stopCleaning 호출이 없다.</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><span class="tag tag-del">삭제</span> <del><code>allSidesBlocked()</code> — ObstacleSensor → RVCController 외부 호출</del> (UC-002 내 두 sideStatus 결과로 내부 판정)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 후진 중 좌측이 막혀있을 때만 rotateRight() → sideStatus(RIGHT) → rotateLeft() 순으로 우측을 확인하고 정면 복귀한다. 좌측 clear 시 즉시 좌회전하며 우측 확인을 생략한다.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="arch-design-class-class-diagram-md">
+  <div class="section-top">
+    <span class="file-path">arch/design/class/class-diagram.md</span>
+    <h1 class="page-title">클래스 다이어그램</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 10건</span><span class="st st-d">✕ 삭제 1건</span><span class="st st-c">~ 변경 6건</span><span class="st st-t">합계 17건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>ObstacleSensor | <span class="tag tag-chg">변경</span> <del><code>frontObstacleDetected()</code>, <code>sideStatus(available)</code>, <code>allSidesBlocked()</code> 이벤트를 전달한다</del> <code>frontObstacleDetected()</code>, <code>sideStatus(LEFT, status)</code>, <code>sideStatus(RIGHT, status)</code> 이벤트를 전달한다. 우측은 <code>rotateRight()</code> 이후 전방 센서가 전달한다 (우측 전용 센서 없음).</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td>NavigationController | <span class="tag tag-chg">변경</span> <del><code>IDriveMotor</code>를 제어한다. <code>turn(available)</code>에서 <code>Direction</code> 목록을 받아 방향 선택 로직(양쪽 여유 시 랜덤)을 수행한다</del> <code>IDriveMotor</code>를 제어한다. <code>turn(direction: Direction)</code>으로 단일 방향을 받아 회전한다. <code>rotateRight()</code>로 전방 센서를 우측으로 회전시킨다. 방향 선택(좌측 우선)은 RVCController가 결정한다.</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del><code>RVCController.sideStatus(available: List&lt;Direction&gt;)</code></del> <code>RVCController.sideStatus(direction: Direction, status: bool)</code> | SD-002, SD-003</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><span class="tag tag-del">삭제</span> <del><code>RVCController.allSidesBlocked()</code></del> | <del>SD-003</del></td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> <del><code>NavigationController.turn(available: List&lt;Direction&gt;)</code></del> <code>NavigationController.turn(direction: Direction)</code> | SD-002, SD-003</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>NavigationController.rotateRight()</code> | SD-002, SD-003</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>IDriveMotor.rotateRight()</code> | SD-002, SD-003</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>NavigationController.rotateLeft()</code> | SD-002, SD-003</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> <code>IDriveMotor.rotateLeft()</code> | SD-002, SD-003</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 다이어그램: <code>RVCController.dustDetected(dustLevel: float)</code> — 음수 입력 시 무시하는 오버로드 | —</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 다이어그램: <code>RVCController.changeState(newState: int)</code> — 유효 범위 외·동일 상태 전이 무시 | —</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 다이어그램: <code>CleaningController.normalizePower()</code> — BOOST → NORMAL 즉시 복귀 | —</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> RVCController 클래스 책임 요약 — <span class="tag tag-add">추가</span> <code>dustDetected(float)</code>: 음수 입력 시 무시하는 오버로드. <span class="tag tag-add">추가</span> <code>changeState(int)</code>: 0(IDLE)/1(CLEANING) 범위 외 값 및 동일 상태 전이 무시</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><span class="tag tag-chg">변경</span> CleaningController 클래스 책임 요약 — <span class="tag tag-add">추가</span> <code>normalizePower()</code>: BOOST 상태에서 즉시 NORMAL로 복귀(비활성 및 비부스트 상태 시 무시)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 메서드 출처: <code>RVCController.dustDetected(float dustLevel)</code> | — (음수 입력 무시 오버로드, 시나리오 테스트 지원)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 메서드 출처: <code>RVCController.changeState(int newState)</code> | — (유효 범위 외·동일 상태 전이 무시, 시나리오 테스트 지원)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><span class="tag tag-add">추가</span> 메서드 출처: <code>CleaningController.normalizePower()</code> | — (BOOST → NORMAL 즉시 복귀, 시나리오 테스트 지원)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="src-code-md">
+  <div class="section-top">
+    <span class="file-path">src/code.md</span>
+    <h1 class="page-title">src/ 코드 변경 이력</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 23건</span><span class="st st-d">✕ 삭제 5건</span><span class="st st-c">~ 변경 15건</span><span class="st st-t">합계 43건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th>파일 / 항목</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>IDriveMotor.hpp</code></td><td><span class="tag tag-add">추가</span> <code>rotateRight() = 0</code> — 전방 센서를 우측으로 회전시키기 위한 순수 가상 메서드 추가</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>IDriveMotor.hpp</code></td><td><span class="tag tag-add">추가</span> <code>rotateLeft() = 0</code> — 우측 스캔 후 정면으로 복귀하기 위한 순수 가상 메서드 추가</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationController.hpp</code></td><td><span class="tag tag-del">삭제</span> <del><code>#include &lt;vector&gt;</code></del> — <code>turn()</code> 시그니처 변경으로 vector 불필요</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>NavigationController.hpp</code></td><td><span class="tag tag-chg">변경</span> <code>turn(const std::vector&lt;Direction&gt;&amp;)</code> → <code>turn(Direction direction)</code> — 단일 방향 인자로 단순화</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>rotateRight()</code> — IDriveMotor::rotateRight() 위임 메서드</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>rotateLeft()</code> — IDriveMotor::rotateLeft() 위임 메서드</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>MotorState</code> enum — 모터 상태 추적을 위한 내부 열거형 (STOPPED, FORWARD, BACKWARD, LEFT, RIGHT, ROTATING_RIGHT, ROTATING_LEFT)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>MotorState motorState_</code> — 현재 모터 상태 멤버 변수 (초기값 STOPPED)</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-del">삭제</span> <del><code>#include &lt;vector&gt;</code>, <code>#include &lt;random&gt;</code></del> — 랜덤 선택 로직 제거로 헤더 불필요</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>turn()</code> 구현 — <del>벡터를 받아 랜덤으로 방향 선택</del> → 단일 방향을 <code>motor_.turn(direction)</code>에 위임. 중복 호출 및 FORWARD/BACKWARD 중 전환 시도를 거부하는 MotorState guard 추가</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>rotateRight()</code> 구현 — <code>motor_.rotateRight()</code> 위임</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>rotateLeft()</code> 구현 — <code>motor_.rotateLeft()</code> 위임</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>moveForward()</code> 구현 — 이미 FORWARD 상태면 중복 호출 무시 (MotorState guard)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>moveBackward()</code> 구현 — 이미 BACKWARD 상태면 중복 호출 무시 (MotorState guard)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>NavigationController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>stop()</code> 구현 — 이미 STOPPED 상태면 중복 호출 무시 (MotorState guard)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>CleaningController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>normalizePower()</code> — BOOST → NORMAL 강제 복귀 (비활성·비부스트 상태 시 무시)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>CleaningController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>bool active_</code> — 청소 활성화 여부 추적 멤버 변수 (초기값 false)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>CleaningController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>startCleaning()</code> — 이미 활성 상태(<code>active_==true</code>)면 중복 호출 무시. <code>active_=true</code> 설정 추가</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>CleaningController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>stopCleaning()</code> — 비활성 상태(<code>active_==false</code>)면 중복 호출 무시. <code>active_=false</code> 설정 추가</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>CleaningController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>boostCleaning()</code> — 비활성 상태(<code>active_==false</code>)면 호출 거부</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>CleaningController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>normalizePower()</code> 구현 — 비활성 또는 비부스트 상태면 무시. 활성+부스트 중일 때 타이머 중단 후 NORMAL 복귀</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-del">삭제</span> <del><code>#include &lt;vector&gt;</code></del> — <code>sideStatus()</code> 시그니처 변경으로 불필요</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-del">삭제</span> <del><code>void allSidesBlocked()</code></del> — 전방·좌·우 동시 막힘 판정을 <code>sideStatus()</code> 내부 상태머신으로 대체</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-chg">변경</span> <code>sideStatus(const std::vector&lt;Direction&gt;&amp;)</code> → <code>sideStatus(Direction direction, bool clear)</code> — 방향별 상태를 순차 호출로 분리</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-chg">변경</span> <code>State</code> enum — <del><code>IDLE</code>, <code>CLEANING</code>, <code>REVERSING</code> 3개</del> → 6개 상태로 확장</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>State::STOPPED</code> — <code>frontObstacleDetected()</code> 수신 후 좌측 스캔 대기 상태</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>State::STOPPED_CHECKING_RIGHT</code> — <code>sideStatus(LEFT)</code> 수신 후 <code>rotateRight()</code> 호출, 우측 스캔 대기 상태</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>State::REVERSING_CHECKING_RIGHT</code> — 후진 중 <code>sideStatus(LEFT)</code> 막힘 확인 후 <code>rotateRight()</code>, 우측 스캔 대기 상태</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>bool leftClear_</code> — <code>STOPPED</code> → <code>STOPPED_CHECKING_RIGHT</code> 전이 시 좌측 결과 임시 보관</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>dustDetected(float dustLevel)</code> — 먼지 수준 float 파라미터 오버로드. 음수 입력 시 무시</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.hpp</code></td><td><span class="tag tag-add">추가</span> <code>changeState(int newState)</code> — 외부에서 상태 직접 지정 (0=IDLE, 1=CLEANING). 범위 외 값 및 동일 상태 전이 무시</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-del">삭제</span> <del><code>allSidesBlocked()</code> 구현</del> — 좌·우 모두 막힘은 <code>STOPPED_CHECKING_RIGHT</code> 상태에서 내부 판정</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>sideStatus()</code> 시그니처 — <code>const std::vector&lt;Direction&gt;&amp;</code> → <code>Direction direction, bool clear</code></td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>sideStatus()</code> 내부 로직 — <del>방향 목록 기반 단순 분기</del> → 4개 상태에 걸친 순차 상태머신으로 전면 재작성</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>STOPPED</code> 분기 — <code>leftClear_</code> 저장 후 <code>rotateRight()</code> 호출, <code>STOPPED_CHECKING_RIGHT</code> 전이</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>STOPPED_CHECKING_RIGHT</code> 분기 — <code>rotateLeft()</code> 정면 복귀 후 LEFT 우선 방향 결정. 양쪽 막힘 시 <code>moveBackward()</code> → <code>REVERSING</code></td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>REVERSING</code> 분기 — 좌측 여유 시 즉시 <code>stop+turn(LEFT)+forward</code>. 막힘 시 <code>rotateRight()</code> → <code>REVERSING_CHECKING_RIGHT</code></td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>REVERSING_CHECKING_RIGHT</code> 분기 — <code>rotateLeft()</code> 복귀 후 우측 여유 시 <code>stop+turn(RIGHT)+forward</code>. 막힘 시 <code>REVERSING</code> 복귀(계속 후진)</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>start()</code> 구현 — CLEANING·REVERSING·REVERSING_CHECKING_RIGHT 상태에서 중복 호출 무시 guard 추가</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>frontObstacleDetected()</code> 구현 — REVERSING·REVERSING_CHECKING_RIGHT 상태(후진 중)에서 재감지 무시 guard 추가</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>dustDetected(float)</code> 구현 — 음수(<code>&lt; 0.0f</code>) 입력 시 무시. 그 외 <code>cleaning_.boostCleaning()</code> 위임</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>changeState(int)</code> 구현 — 유효 범위(0~1) 외 및 동일 상태 전이 무시. 0=IDLE, 1=CLEANING으로 직접 <code>state_</code> 설정</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+</body>
+</html>

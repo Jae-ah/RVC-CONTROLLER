@@ -12,6 +12,8 @@ public:
     void frontObstacleDetected();
     void sideStatus(Direction direction, bool clear);
     void dustDetected();
+    void dustDetected(float dustLevel);
+    void changeState(int newState);
 
 private:
     enum class State {

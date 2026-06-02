@@ -50,6 +50,8 @@ classDiagram
         +frontObstacleDetected() void
         +sideStatus(direction: Direction, status: bool) void
         +dustDetected() void
+        +dustDetected(dustLevel: float) void
+        +changeState(newState: int) void
     }
 
     class NavigationController {
@@ -66,6 +68,7 @@ classDiagram
         +stopCleaning() void
         +boostCleaning() void
         +onExpired() void
+        +normalizePower() void
     }
 
     class HighPowerTimer {
@@ -127,9 +130,9 @@ classDiagram
 
 | 클래스 | 책임 |
 |--------|------|
-| RVCController | 시스템 오퍼레이션을 수신하고 NavigationController·CleaningController에 위임한다. sideStatus(LEFT)·sideStatus(RIGHT) 결과로 회피 방향을 결정한다 (LEFT 여유 시 LEFT 우선; LEFT 막힘 시에만 RIGHT). |
+| RVCController | 시스템 오퍼레이션을 수신하고 NavigationController·CleaningController에 위임한다. sideStatus(LEFT)·sideStatus(RIGHT) 결과로 회피 방향을 결정한다 (LEFT 여유 시 LEFT 우선; LEFT 막힘 시에만 RIGHT). [추가] `dustDetected(float)` — 음수 입력 시 무시하는 오버로드. [추가] `changeState(int)` — 0(IDLE)/1(CLEANING) 범위 외 값 및 동일 상태 전이 무시. |
 | NavigationController | [변경] ~~`IDriveMotor`를 제어한다. `turn(available)`에서 `Direction` 목록을 받아 방향 선택 로직(양쪽 여유 시 랜덤)을 수행한다~~ `IDriveMotor`를 제어한다. `turn(direction: Direction)`으로 단일 방향을 받아 회전한다. `rotateRight()`로 전방 센서를 우측으로 회전시킨다. 방향 선택(좌측 우선)은 RVCController가 결정한다. |
-| CleaningController | `ICleaningMotor` 출력을 제어하고 HighPowerTimer를 관리한다. `ITimerExpiredCallback`을 구현하며 `onExpired()` 수신 시 출력을 NORMAL로 복구한다 |
+| CleaningController | `ICleaningMotor` 출력을 제어하고 HighPowerTimer를 관리한다. `ITimerExpiredCallback`을 구현하며 `onExpired()` 수신 시 출력을 NORMAL로 복구한다. [추가] `normalizePower()` — BOOST 상태에서 즉시 NORMAL로 복귀(비활성 및 비부스트 상태 시 무시). |
 | HighPowerTimer | 고출력 청소 지속 시간을 관리한다. 만료 시 `ITimerExpiredCallback.onExpired()`를 호출한다 |
 
 ### 열거형
@@ -148,6 +151,8 @@ classDiagram
 | [변경] ~~`RVCController.sideStatus(available: List<Direction>)`~~ `RVCController.sideStatus(direction: Direction, status: bool)` | SD-002, SD-003 |
 | [삭제] ~~`RVCController.allSidesBlocked()`~~ | ~~SD-003~~ |
 | `RVCController.dustDetected()` | SD-004 |
+| [추가] `RVCController.dustDetected(dustLevel: float)` | — (음수 입력 무시 오버로드, 시나리오 테스트 지원) |
+| [추가] `RVCController.changeState(newState: int)` | — (유효 범위 외·동일 상태 전이 무시, 시나리오 테스트 지원) |
 | `NavigationController.moveForward()` | SD-001, SD-002, SD-003 |
 | `NavigationController.moveBackward()` | SD-003 |
 | `NavigationController.stop()` | SD-002, SD-003 |
@@ -160,6 +165,7 @@ classDiagram
 | `CleaningController.stopCleaning()` | SD-002, SD-003 |
 | `CleaningController.boostCleaning()` | SD-004 |
 | `CleaningController.onExpired()` | SD-004 |
+| [추가] `CleaningController.normalizePower()` | — (BOOST → NORMAL 즉시 복귀, 시나리오 테스트 지원) |
 | `HighPowerTimer.start()` | SD-004 |
 | `HighPowerTimer.reset()` | SD-004 |
 | `HighPowerTimer.stop()` | SD-002, SD-003, SD-004 |

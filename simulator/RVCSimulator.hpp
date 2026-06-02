@@ -41,6 +41,24 @@ public:
         emit("DustSensor    ", "dustDetected()          ", "\033[1;35m");
         rvc_.dustDetected();
     }
+    void dustDetected(float dustLevel) {
+        rvc_.dustDetected(dustLevel);
+    }
+    void changeState(int state) {
+        rvc_.changeState(state);
+    }
+
+    // ── 직접 Motor 명령 (NavigationController 상태 검증용) ────────
+    void moveForward()          { nav_.moveForward(); }
+    void moveBackward()         { nav_.moveBackward(); }
+    void stop()                 { nav_.stop(); }
+    void turn(Direction d)      { nav_.turn(d); }
+
+    // ── 직접 Cleaner 명령 (CleaningController 상태 검증용) ────────
+    void startCleaning()    { cleanCtrl_.startCleaning(); }
+    void stopCleaning()     { cleanCtrl_.stopCleaning(); }
+    void boostCleaning()    { cleanCtrl_.boostCleaning(); }
+    void normalizePower()   { cleanCtrl_.normalizePower(); }
 
     // ── 검증용 접근자 ──────────────────────────────────────────────
     SimDriveMotor&           drive()     { return drive_; }

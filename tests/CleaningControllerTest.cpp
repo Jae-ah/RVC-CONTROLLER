@@ -30,6 +30,7 @@ TEST_F(CleaningControllerTest, startCleaning_callsMotorWithNormalLevel) {
 // ── stopCleaning() ───────────────────────────────────────────────────────────
 
 TEST_F(CleaningControllerTest, stopCleaning_callsMotorStop) {
+    controller.startCleaning();  // active_=false → true 선행 상태 설정
     controller.stopCleaning();
 
     EXPECT_EQ(motor.stopCount, 1);
@@ -39,6 +40,8 @@ TEST_F(CleaningControllerTest, stopCleaning_callsMotorStop) {
 
 // 처음 호출 시 HIGH 레벨로 전환
 TEST_F(CleaningControllerTest, boostCleaning_whenIdle_switchesToHighLevel) {
+    controller.startCleaning();  // active_=false → true 선행 상태 설정
+    motor.startCalls.clear();
     controller.boostCleaning();
 
     ASSERT_EQ(motor.startCalls.size(), 1u);
@@ -71,6 +74,7 @@ TEST_F(CleaningControllerTest, onExpired_restoresNormalLevel) {
 // 타이머가 실제로 만료되면 NORMAL로 복귀하고,
 // 이후 boostCleaning()을 다시 호출하면 HIGH로 전환된다
 TEST_F(CleaningControllerTimerTest, timerExpiry_restoresNormal_andAllowsSubsequentBoost) {
+    controller.startCleaning(); // active_=false → true 선행 상태 설정
     controller.boostCleaning(); // HIGH 시작 + 80ms 타이머 가동
     std::this_thread::sleep_for(std::chrono::milliseconds(200)); // 만료 대기
 

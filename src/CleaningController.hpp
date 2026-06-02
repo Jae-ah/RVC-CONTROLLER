@@ -13,8 +13,11 @@ public:
     void boostCleaning();
     void onExpired() override;
 
+    void normalizePower();    // BOOST → NORMAL (중복 무시, OFF 시 거부)
+
 private:
     ICleaningMotor& motor_;
     HighPowerTimer timer_;
+    bool active_;
     bool boosting_;
 };
