@@ -151,9 +151,9 @@ code{
   <div class="sidebar-title">RVC SW Controller</div>
   <div class="sidebar-sub">v2.0 변경 보고서</div>
   <div class="totals">
-    <div class="tot ta">52<span>추가</span></div>
-    <div class="tot td">10<span>삭제</span></div>
-    <div class="tot tc">61<span>변경</span></div>
+    <div class="tot ta">78<span>추가</span></div>
+    <div class="tot td">25<span>삭제</span></div>
+    <div class="tot tc">65<span>변경</span></div>
   </div>
   <div class="toc-label">목차</div>
   <ul class="toc-list">
@@ -171,6 +171,8 @@ code{
     <li><a href="#arch-design-sd-SD-003-md" class="toc-link"><span class="toc-name">SD-003: 삼면 장애물 후진 회피</span><span class="toc-badges"><span class="tb tb-a">2</span><span class="tb tb-d">1</span><span class="tb tb-c">3</span></span></a></li>
     <li><a href="#arch-design-class-class-diagram-md" class="toc-link"><span class="toc-name">클래스 다이어그램</span><span class="toc-badges"><span class="tb tb-a">10</span><span class="tb tb-d">1</span><span class="tb tb-c">6</span></span></a></li>
     <li><a href="#src-code-md" class="toc-link"><span class="toc-name">src/ 코드 변경 이력</span><span class="toc-badges"><span class="tb tb-a">23</span><span class="tb tb-d">5</span><span class="tb tb-c">15</span></span></a></li>
+    <li><a href="#tests-unit-test-md" class="toc-link"><span class="toc-name">단위 테스트 변경 이력</span><span class="toc-badges"><span class="tb tb-a">24</span><span class="tb tb-d">15</span><span class="tb tb-c">4</span></span></a></li>
+    <li><a href="#system-tests-system-test-md" class="toc-link"><span class="toc-name">시스템 테스트 변경 이력</span><span class="toc-badges"><span class="tb tb-a">2</span></span></a></li>
   </ul>
 </nav>
 
@@ -180,10 +182,10 @@ code{
     <h1>v2.0 변경 보고서</h1>
     <p class="subtitle">오른쪽 전용 센서 삭제 · 전방 센서 회전 스캔(rotateRight/Left) 도입 · 장애물 회피 방향 좌측 우선 적용</p>
     <div class="cover-badges">
-      <span class="cbadge cbadge-add">✚ 추가 52건</span>
-      <span class="cbadge cbadge-del">✕ 삭제 10건</span>
-      <span class="cbadge cbadge-chg">~ 변경 61건</span>
-      <span class="cbadge cbadge-file">📄 14개 파일</span>
+      <span class="cbadge cbadge-add">✚ 추가 78건</span>
+      <span class="cbadge cbadge-del">✕ 삭제 25건</span>
+      <span class="cbadge cbadge-chg">~ 변경 65건</span>
+      <span class="cbadge cbadge-file">📄 16개 파일</span>
     </div>
   </div>
 
@@ -499,6 +501,79 @@ code{
       <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-chg">변경</span> <code>frontObstacleDetected()</code> 구현 — REVERSING·REVERSING_CHECKING_RIGHT 상태(후진 중)에서 재감지 무시 guard 추가</td></tr>
       <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>dustDetected(float)</code> 구현 — 음수(<code>&lt; 0.0f</code>) 입력 시 무시. 그 외 <code>cleaning_.boostCleaning()</code> 위임</td></tr>
       <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCController.cpp</code></td><td><span class="tag tag-add">추가</span> <code>changeState(int)</code> 구현 — 유효 범위(0~1) 외 및 동일 상태 전이 무시. 0=IDLE, 1=CLEANING으로 직접 <code>state_</code> 설정</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="tests-unit-test-md">
+  <div class="section-top">
+    <span class="file-path">tests/unit_test.md</span>
+    <h1 class="page-title">단위 테스트 변경 이력</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 24건</span><span class="st st-d">✕ 삭제 15건</span><span class="st st-c">~ 변경 4건</span><span class="st st-t">합계 43건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th style="width:300px">파일 / 테스트명</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>CleaningControllerTest.cpp</code><br><small><code>stopCleaning_callsMotorStop</code></small></td><td><span class="tag tag-chg">변경</span> <code>controller.startCleaning()</code> 선행 호출 추가 — <code>active_</code>: false → true</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>CleaningControllerTest.cpp</code><br><small><code>boostCleaning_whenIdle_switchesToHighLevel</code></small></td><td><span class="tag tag-chg">변경</span> <code>controller.startCleaning()</code> 및 <code>motor.startCalls.clear()</code> 선행 추가</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>CleaningControllerTest.cpp</code><br><small><code>timerExpiry_restoresNormal_andAllowsSubsequentBoost</code></small></td><td><span class="tag tag-chg">변경</span> <code>controller.startCleaning()</code> 선행 호출 추가</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationControllerTest.cpp</code><br><small><del><code>turn_emptyList_doesNotCallMotor</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 — 빈 목록 시 모터 미호출 검증. 시그니처 변경으로 삭제</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationControllerTest.cpp</code><br><small><del><code>turn_singleLeft_turnsLeft</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 단일 LEFT 검증. 단일 방향 기반으로 대체</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationControllerTest.cpp</code><br><small><del><code>turn_singleRight_turnsRight</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 단일 RIGHT 검증. 단일 방향 기반으로 대체</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationControllerTest.cpp</code><br><small><del><code>turn_multipleDirections_picksExactlyOne</code></del></small></td><td><span class="tag tag-del">삭제</span> 랜덤 방향 선택 검증. v2.0 랜덤 로직 제거로 삭제</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>NavigationControllerTest.cpp</code><br><small><del><code>turn_calledTwice_motorCalledTwice</code></del></small></td><td><span class="tag tag-del">삭제</span> 2회 연속 turn 검증. MotorState guard 도입으로 동작 변경되어 삭제</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationControllerTest.cpp</code><br><small><code>turn_left_delegatesToMotor</code></small></td><td><span class="tag tag-add">추가</span> <code>turn(Direction::LEFT)</code> 단일 방향 위임 검증</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationControllerTest.cpp</code><br><small><code>turn_right_delegatesToMotor</code></small></td><td><span class="tag tag-add">추가</span> <code>turn(Direction::RIGHT)</code> 단일 방향 위임 검증</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationControllerTest.cpp</code><br><small><code>rotateRight_delegatesToMotor</code></small></td><td><span class="tag tag-add">추가</span> <code>rotateRight()</code> → 모터 위임 검증</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>NavigationControllerTest.cpp</code><br><small><code>rotateLeft_delegatesToMotor</code></small></td><td><span class="tag tag-add">추가</span> <code>rotateLeft()</code> → 모터 위임 검증</td></tr>
+      <tr class="row-chg"><td class="bc"><span class="badge badge-chg">변경</span></td><td><code>NavigationControllerTest.cpp</code><br><small><code>stop_delegatesToMotor</code></small></td><td><span class="tag tag-chg">변경</span> <code>controller.moveForward()</code> 선행 추가 — <code>motorState_</code>: STOPPED → FORWARD</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenStopped_turnsToAvailableDirection</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 시그니처 → 방향별 2단계 호출로 대체</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenStopped_restartsCleaning</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 시그니처 → 방향별 2단계 호출로 대체</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenStopped_movesForward</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 시그니처 → 방향별 2단계 호출로 대체</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>allSidesBlocked_stopsCleaning</code></del></small></td><td><span class="tag tag-del">삭제</span> <code>allSidesBlocked()</code> 오퍼레이션 삭제에 따라 제거</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>allSidesBlocked_movesBackward</code></del></small></td><td><span class="tag tag-del">삭제</span> <code>allSidesBlocked()</code> 오퍼레이션 삭제에 따라 제거</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenReversing_withAvailableDir_stopsMotor</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 — 좌측 우선 로직으로 전면 재작성</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenReversing_withAvailableDir_turns</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 — 좌측 우선 로직으로 전면 재작성</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenReversing_withAvailableDir_movesForward</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 — 좌측 우선 로직으로 전면 재작성</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenReversing_withAvailableDir_restartsCleaning</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 — 좌측 우선 로직으로 전면 재작성</td></tr>
+      <tr class="row-del"><td class="bc"><span class="badge badge-del">삭제</span></td><td><code>RVCControllerTest.cpp</code><br><small><del><code>sideStatus_whenReversing_withEmptyDir_isIgnored</code></del></small></td><td><span class="tag tag-del">삭제</span> 벡터 기반 — 좌측 우선 로직으로 전면 재작성</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_firstCall_rotatesRight</code></small></td><td><span class="tag tag-add">추가</span> STOPPED 상태에서 첫 <code>sideStatus(LEFT)</code> 수신 시 <code>rotateRight()</code> 호출</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_secondCall_rotatesLeft</code></small></td><td><span class="tag tag-add">추가</span> STOPPED_CHECKING_RIGHT에서 <code>sideStatus(RIGHT)</code> 수신 시 <code>rotateLeft()</code> 호출</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_leftClear_turnsLeft</code></small></td><td><span class="tag tag-add">추가</span> 좌측 여유 시 LEFT 방향으로 회전</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_leftClear_restartsCleaning</code></small></td><td><span class="tag tag-add">추가</span> 좌측 여유 시 청소 재개</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_leftClear_movesForward</code></small></td><td><span class="tag tag-add">추가</span> 좌측 여유 시 전진</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_leftBlockedRightClear_turnsRight</code></small></td><td><span class="tag tag-add">추가</span> 좌측 막힘·우측 여유 시 RIGHT 방향으로 회전</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_leftBlockedRightClear_restartsCleaning</code></small></td><td><span class="tag tag-add">추가</span> 좌측 막힘·우측 여유 시 청소 재개</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_leftBlockedRightClear_movesForward</code></small></td><td><span class="tag tag-add">추가</span> 좌측 막힘·우측 여유 시 전진</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_bothBlocked_movesBackward</code></small></td><td><span class="tag tag-add">추가</span> 좌우 모두 막힘 시 후진 (E1 진입)</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_bothBlocked_doesNotTurn</code></small></td><td><span class="tag tag-add">추가</span> 좌우 모두 막힘 시 <code>turn</code> 미호출</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_leftClear_stops</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌측 여유 시 <code>stop</code></td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_leftClear_turnsLeft</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌측 여유 시 LEFT 회전</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_leftClear_movesForward</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌측 여유 시 전진</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_leftClear_restartsCleaning</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌측 여유 시 청소 재개</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_leftBlocked_rotatesRight</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌측 막힘 시 <code>rotateRight()</code> 호출</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_rightOnly_turnsRight</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 우측만 여유 시 RIGHT 회전</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_rightOnly_movesForward</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 우측만 여유 시 전진</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_rightOnly_restartsCleaning</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 우측만 여유 시 청소 재개</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_bothBlocked_noTurnOrForward</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌우 모두 막힘 시 <code>turn</code>/<code>forward</code> 미호출</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>RVCControllerTest.cpp</code><br><small><code>sideStatus_whenReversing_bothBlocked_rotatesRightThenLeft</code></small></td><td><span class="tag tag-add">추가</span> 후진 중 좌우 막힘 시 <code>rotateRight</code> → <code>rotateLeft</code> 호출</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-section" id="system-tests-system-test-md">
+  <div class="section-top">
+    <span class="file-path">system-tests/system_test.md</span>
+    <h1 class="page-title">시스템 테스트 변경 이력</h1>
+    <hr class="title-rule">
+  </div>
+  <div class="stats"><span class="st st-a">✚ 추가 2건</span><span class="st st-t">합계 2건</span></div>
+  <table class="ct">
+    <thead><tr><th style="width:76px">구분</th><th style="width:220px">파일</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>SystemTests.cpp</code></td><td><span class="tag tag-add">추가</span> v2.0 핵심 시나리오 30개 (긍정 ST-P01~P10 · 부정 ST-N01~N20). v1.0에 시스템 테스트 없음 — v2.0 신규 작성.</td></tr>
+      <tr class="row-add"><td class="bc"><span class="badge badge-add">추가</span></td><td><code>SystemTests_v2.cpp</code></td><td><span class="tag tag-add">추가</span> UP팀 제공 시나리오 30개 (긍정 TC-POS-01~10 · 부정 TC-NEG-01~20). v1.0에 시스템 테스트 없음 — v2.0 신규 작성.</td></tr>
     </tbody>
   </table>
 </section>
