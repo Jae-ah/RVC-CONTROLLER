@@ -75,10 +75,13 @@ jobs:
       - name: Configure & Build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-          cmake --build build --target rvc_system_tests --parallel
+          cmake --build build --target rvc_system_tests --target rvc_system_tests_v2 --parallel
 
       - name: Run system tests
         run: ./build/rvc_system_tests
+
+      - name: Run system tests v2
+        run: ./build/rvc_system_tests_v2
 
   # ── cppcheck ──────────────────────────────────────────────────────────────
   cppcheck:
