@@ -50,10 +50,11 @@ TEST_F(CleaningControllerTest, boostCleaning_whenIdle_switchesToHighLevel) {
 
 // 이미 부스트 중일 때 모터 재호출 없이 타이머만 리셋
 TEST_F(CleaningControllerTest, boostCleaning_whenAlreadyBoosting_doesNotCallMotorAgain) {
-    controller.boostCleaning();
+    controller.startCleaning();  // active_=false → true
+    controller.boostCleaning();  // boosting_=false → true, HIGH 호출
     motor.startCalls.clear();
 
-    controller.boostCleaning(); // 타이머 리셋만, 모터 호출 없음
+    controller.boostCleaning();  // 이미 부스트 중 → timer_.reset() 만 호출, 모터 재호출 없음
 
     EXPECT_TRUE(motor.startCalls.empty());
 }
