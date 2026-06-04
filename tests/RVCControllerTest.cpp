@@ -303,3 +303,72 @@ TEST_F(RVCControllerTest, dustDetected_boostsCleaningToHighLevel) {
     ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
     EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::HIGH);
 }
+
+// ── dustDetected(float) ──────────────────────────────────────────────────────
+
+// 양수 dustLevel → HIGH 전환
+TEST_F(RVCControllerTest, dustDetected_positiveLevel_boostsCleaning) {
+    rvc.start();
+    resetCounters();
+
+    rvc.dustDetected(0.5f);
+
+    ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
+    EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::HIGH);
+}
+
+// 음수 dustLevel → 무시
+TEST_F(RVCControllerTest, dustDetected_negativeLevel_isIgnored) {
+    rvc.start();
+    resetCounters();
+
+    rvc.dustDetected(-1.0f);
+
+    EXPECT_TRUE(cleaningMotor.startCalls.empty());
+}
+
+// ── changeState(int) ─────────────────────────────────────────────────────────
+
+// 유효 전이: IDLE(0) → CLEANING(1) — start() 중복 호출이 무시되어야 함
+TEST_F(RVCControllerTest, changeState_idleToCleaning_changesState) {
+    rvc.changeState(1);        // state_ = CLEANING (active_는 false 유지)
+
+    // CLEANING 상태이므로 start() 가 무시됨
+    rvc.start();
+    EXPECT_TRUE(cleaningMotor.startCalls.empty());
+    EXPECT_EQ(driveMotor.forwardCount, 0);
+}
+
+// 유효 전이: CLEANING(1) → IDLE(0) — start()가 다시 동작해야 함
+TEST_F(RVCControllerTest, changeState_cleaningToIdle_changesState) {
+    rvc.changeState(1);        // state_ = CLEANING
+    rvc.changeState(0);        // state_ = IDLE (active_는 여전히 false)
+
+    rvc.start();               // IDLE이므로 start() 정상 동작
+    ASSERT_EQ(cleaningMotor.startCalls.size(), 1u);
+    EXPECT_EQ(cleaningMotor.startCalls[0], CleaningLevel::NORMAL);
+}
+
+// 범위 외 값 → 무시 (상태 변화 없음)
+TEST_F(RVCControllerTest, changeState_outOfRange_isIgnored) {
+    rvc.start();               // CLEANING 상태
+    resetCounters();
+
+    rvc.changeState(999);
+    rvc.changeState(-1);
+
+    // 여전히 CLEANING이므로 frontObstacleDetected 가 stopCleaning 호출
+    rvc.frontObstacleDetected();
+    EXPECT_EQ(cleaningMotor.stopCount, 1);
+}
+
+// 동일 상태 전이 → 무시
+TEST_F(RVCControllerTest, changeState_sameState_isIgnored) {
+    rvc.start();               // CLEANING 상태
+    resetCounters();
+
+    rvc.changeState(1);        // 이미 CLEANING — 무시
+
+    // 모터 추가 호출 없음
+    EXPECT_TRUE(cleaningMotor.startCalls.empty());
+}

@@ -71,6 +71,38 @@ TEST_F(CleaningControllerTest, onExpired_restoresNormalLevel) {
     EXPECT_EQ(motor.startCalls[0], CleaningLevel::NORMAL);
 }
 
+// ── normalizePower() ─────────────────────────────────────────────────────────
+
+// 부스트 중일 때 즉시 NORMAL 복귀
+TEST_F(CleaningControllerTest, normalizePower_whenBoosting_restoresNormal) {
+    controller.startCleaning();
+    controller.boostCleaning();
+    motor.startCalls.clear();
+
+    controller.normalizePower();
+
+    ASSERT_EQ(motor.startCalls.size(), 1u);
+    EXPECT_EQ(motor.startCalls[0], CleaningLevel::NORMAL);
+}
+
+// 부스트 상태가 아닐 때 무시 — 모터 재호출 없음
+TEST_F(CleaningControllerTest, normalizePower_whenNotBoosting_isIgnored) {
+    controller.startCleaning();
+    motor.startCalls.clear();
+
+    controller.normalizePower();
+
+    EXPECT_TRUE(motor.startCalls.empty());
+}
+
+// 비활성(active_==false) 상태에서 무시
+TEST_F(CleaningControllerTest, normalizePower_whenInactive_isIgnored) {
+    controller.normalizePower();
+
+    EXPECT_TRUE(motor.startCalls.empty());
+    EXPECT_EQ(motor.stopCount, 0);
+}
+
 // 타이머가 실제로 만료되면 NORMAL로 복귀하고,
 // 이후 boostCleaning()을 다시 호출하면 HIGH로 전환된다
 TEST_F(CleaningControllerTimerTest, timerExpiry_restoresNormal_andAllowsSubsequentBoost) {
